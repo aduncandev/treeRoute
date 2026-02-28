@@ -1,3 +1,31 @@
+// ── Procedural Generation (PRNG) ──
+function cyrb128(str) {
+    let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+    for (let i = 0, k; i < str.length; i++) {
+        k = str.charCodeAt(i);
+        h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+        h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+        h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+        h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+    }
+    h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+    h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+    h3 = Math.imul(h1 ^ (h3 >>> 17), 2716044179);
+    h4 = Math.imul(h2 ^ (h4 >>> 19), 951274213);
+    return (h1^h2^h3^h4)>>>0;
+}
+function mulberry32(a) {
+    return function() {
+      var t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+// Global user state
+let currentUser = localStorage.getItem('treeRoute_user') || 'Guest';
+
 // ── Data & Constants ──
 const MODES = {
     car:     { label: 'Car',           speedKmh: 50, calPerKm: 0,  co2PerKm: 0.192 },
@@ -7,7 +35,7 @@ const MODES = {
     ecar:    { label: 'Electric Car',  speedKmh: 50, calPerKm: 0,  co2PerKm: 0.05 }
 };
 const CAR_CO2 = 0.192;
-const MILESTONES = [15, 30, 60, 100, 200];
+const MILESTONES = [15, 30, 60, 100, 200, 350, 500, 1000, 2500, 5000, 10000];
 
 let journeys = [];
 let coordsA = null, coordsB = null;
@@ -137,125 +165,164 @@ function updateUI() {
     updateJourneyLog();
 }
 
-// ── Ecosystem Evolution ──
+// ── Ecosystem Procedural Generation ──
 function updateEcosystem(saved) {
+    // Generate a fixed random seed from the user's name
+    const seed = cyrb128(currentUser);
+    const globalRng = mulberry32(seed);
+
+    const BIOMES = [
+        { name: 'Forest',   sky: '#bae6fd', ground: '#86efac', trunk: '#7c3f1a', leaves: ['#4ade80', '#22c55e', '#16a34a'] },
+        { name: 'Autumn',   sky: '#ffedd5', ground: '#fcd34d', trunk: '#5c2e0e', leaves: ['#fb923c', '#f97316', '#ea580c'] },
+        { name: 'Cherry',   sky: '#fce7f3', ground: '#fbcfe8', trunk: '#4a3022', leaves: ['#f9a8d4', '#f472b6', '#ec4899'] },
+        { name: 'Tropical', sky: '#cffafe', ground: '#4ade80', trunk: '#78350f', leaves: ['#a3e635', '#84cc16', '#65a30d'] },
+        { name: 'Pine',     sky: '#e0f2fe', ground: '#94a3b8', trunk: '#3f3f46', leaves: ['#0f766e', '#3f6212', '#14532d'] }
+    ];
+
+    // Select a unique biome for this user
+    const biomeIndex = Math.floor(globalRng() * BIOMES.length);
+    const biome = BIOMES[biomeIndex];
+
+    const scrollArea = document.getElementById('ecoScrollArea');
     const sky = document.getElementById('ecoSky');
     const ground = document.getElementById('ecoGround');
+    const msg = document.getElementById('treeMessage');
     const sun = document.getElementById('ecoSun');
     const river = document.getElementById('ecoRiver');
-    const msg = document.getElementById('treeMessage');
-    
-    // Animals
-    const birds = document.querySelectorAll('.bird');
-    const deer = document.querySelector('.deer');
-    const butterfly = document.querySelector('.butterfly');
-    const frog = document.querySelector('.frog');
 
-    // Tree parts
-    const trunk = document.getElementById('trunk');
-    const leavesW = document.getElementById('leavesWrap');
-
-    let message = "";
-    let leafHTML = "";
-    let trunkH = 0, bottomOffset = 0;
+    // Clear existing procedural elements on re-render
+    document.querySelectorAll('.proc-element').forEach(el => el.remove());
 
     if (saved === 0) {
-        // Level 0: Desert
-        sky.style.background = '#e2e8f0'; // Grey smog
-        ground.style.background = '#d6cfc4'; // Desert sand
-        sun.style.opacity = '0'; sun.style.transform = 'translateY(20px)';
-        river.style.opacity = '0'; river.style.transform = 'scaleY(0)';
-        
-        birds.forEach(b => { b.style.opacity = '0'; b.style.transform = 'translateX(-20px)'; });
-        deer.style.opacity = '0'; deer.style.transform = 'translateX(20px)';
-        butterfly.style.opacity = '0'; butterfly.style.transform = 'translateY(10px)';
-        frog.style.opacity = '0'; frog.style.transform = 'translateY(10px)';
-
-        trunkH = 0; bottomOffset = 0;
-        message = "A barren desert. Save CO₂ to bring it to life!";
-
-    } else if (saved <= 15) {
-        // Level 1: Seedling & Sun
-        const p = Math.min(1, saved / 15);
-        sky.style.background = `rgba(186, 230, 253, ${p})`; // Fades to blue
-        sun.style.opacity = p.toString();
-        sun.style.transform = `translateY(${20 - (p * 20)}px)`;
-
-        trunkH = 10 + (p * 20);
-        bottomOffset = trunkH;
-        leafHTML = `<div class="leaf-circle" style="width:${10 + p*10}px;height:${10 + p*10}px;background:#4ade80;"></div>`;
-        message = "🌱 The smog lifts! A seedling appears.";
-
-    } else if (saved <= 40) {
-        // Level 2: Grass & Small Animals
-        const p = (saved - 15) / 25;
-        sky.style.background = '#bae6fd'; 
-        sun.style.opacity = '1'; sun.style.transform = 'translateY(0)';
-        
-        // Ground turns green
-        const r = 214 - (p * (214 - 134)); // d6 -> 86
-        const g = 207 + (p * (239 - 207)); // cf -> ef
-        const b = 196 - (p * (196 - 172)); // c4 -> ac
-        ground.style.background = `rgb(${r}, ${g}, ${b})`; 
-
-        birds.forEach(b => { b.style.opacity = p.toString(); b.style.transform = `translateX(${p * 20}px)`; });
-        butterfly.style.opacity = p.toString(); butterfly.style.transform = `translateY(-${p * 10}px)`;
-
-        trunkH = 30 + (p * 40);
-        bottomOffset = trunkH - 5;
-        leafHTML = `
-            <div class="leaf-circle" style="width:${30 + p*20}px;height:${20 + p*15}px;background:#22c55e;margin-bottom:-5px;"></div>
-            <div class="leaf-circle" style="width:${40 + p*30}px;height:${40 + p*30}px;background:#16a34a;"></div>`;
-        message = "🌿 Grass grows and insects return!";
-
-    } else if (saved <= 100) {
-        // Level 3: River & Frogs
-        const p = (saved - 40) / 60;
-        ground.style.background = '#86efac';
-        
-        river.style.opacity = p.toString();
-        river.style.transform = `scaleY(${p})`;
-        frog.style.opacity = p.toString();
-        frog.style.transform = `translateY(-${p * 5}px)`;
-
-        birds.forEach(b => { b.style.opacity = '1'; b.style.transform = 'translateX(20px)'; });
-        butterfly.style.opacity = '1'; butterfly.style.transform = 'translateY(-10px)';
-
-        trunkH = 70 + (p * 40);
-        bottomOffset = trunkH - 10;
-        leafHTML = `
-            <div class="leaf-circle" style="width:50px;height:50px;background:#4ade80;margin-bottom:-10px;"></div>
-            <div class="leaf-circle" style="width:80px;height:60px;background:#22c55e;margin-bottom:-10px;"></div>
-            <div class="leaf-circle" style="width:${80 + p*30}px;height:${80 + p*30}px;background:#16a34a;"></div>`;
-        message = "💧 A river flows, bringing life!";
-
-    } else {
-        // Level 4: Full Forest & Deer
-        const p = Math.min(1, (saved - 100) / 100);
-        ground.style.background = '#86efac';
-        river.style.opacity = '1'; river.style.transform = 'scaleY(1)';
-        frog.style.opacity = '1';
-        
-        deer.style.opacity = p.toString();
-        deer.style.transform = `translateX(-${p * 15}px)`;
-
-        trunkH = 110 + (p * 30);
-        bottomOffset = trunkH - 15;
-        leafHTML = `
-            <div class="leaf-circle" style="width:70px;height:70px;background:#4ade80;margin-bottom:-15px;"></div>
-            <div class="leaf-circle" style="width:110px;height:80px;background:#22c55e;margin-bottom:-15px;"></div>
-            <div class="leaf-circle" style="width:${110 + p*40}px;height:${110 + p*30}px;background:#15803d;"></div>`;
-        message = "🌳 A thriving ecosystem! Nature thanks you!";
+        sky.style.background = '#e2e8f0';
+        ground.style.background = '#d6cfc4';
+        msg.textContent = `A barren desert. Save CO₂ to bring ${currentUser}'s ecosystem to life!`;
+        sun.style.opacity = '0';
+        river.style.opacity = '0';
+        scrollArea.style.width = '100%';
+        return;
     }
 
-    trunk.style.height   = trunkH + 'px';
-    leavesW.style.bottom = bottomOffset + 'px';
-    leavesW.innerHTML    = leafHTML;
-    msg.textContent      = message;
+    // Set colors to user's biome
+    sky.style.background = biome.sky;
+    ground.style.background = biome.ground;
+    sun.style.opacity = '1';
+    sun.style.transform = `translateY(0)`;
+    
+    // Add river for advanced ecosystems
+    if (saved > 40) {
+        river.style.opacity = '1';
+        river.style.transform = 'scaleY(1)';
+    } else {
+        river.style.opacity = '0';
+        river.style.transform = 'scaleY(0)';
+    }
+
+    // Determine width dynamically so the forest can grow infinitely
+    const containerWidth = document.getElementById('ecoScene').clientWidth || 800;
+    let maxRight = containerWidth;
+
+    // Generate 1 tree per 10kg saved, ensuring at least 1 tree if they saved > 0
+    const numTrees = Math.floor(saved / 10) + (saved > 0 ? 1 : 0);
+
+    for (let i = 0; i < numTrees; i++) {
+        // Unique seed for this exact tree position
+        const rng = mulberry32(seed + i * 9999);
+        
+        // Spread trees rightwards as more are added
+        const spread = (i < 5) ? containerWidth * 0.8 : containerWidth * 0.8 + (i - 4) * 150;
+        const x = (rng() * 100) + spread - 100; 
+        
+        if (x + 150 > maxRight) maxRight = x + 150;
+
+        const scale = 0.6 + (rng() * 0.8);
+        const zIndex = Math.floor(scale * 100);
+        
+        const tree = document.createElement('div');
+        tree.className = 'proc-tree proc-element';
+        tree.style.left = `${x}px`;
+        tree.style.bottom = `${(rng() * 20)}px`;
+        tree.style.transform = `scale(${scale})`;
+        tree.style.zIndex = zIndex;
+
+        const trunk = document.createElement('div');
+        trunk.className = 'proc-trunk';
+        trunk.style.height = `${40 + rng() * 40}px`;
+        trunk.style.background = biome.trunk;
+        tree.appendChild(trunk);
+
+        const leaves = document.createElement('div');
+        leaves.className = 'proc-leaves';
+        
+        const numLeaves = 3 + Math.floor(rng() * 3);
+        for(let l=0; l<numLeaves; l++) {
+            const leaf = document.createElement('div');
+            leaf.className = 'proc-leaf';
+            leaf.style.width = `${50 + rng()*40}px`;
+            leaf.style.height = `${50 + rng()*40}px`;
+            leaf.style.background = biome.leaves[Math.floor(rng() * biome.leaves.length)];
+            leaf.style.bottom = `${rng() * 30}px`;
+            leaf.style.left = `${-40 + rng() * 60}px`;
+            leaves.appendChild(leaf);
+        }
+        tree.appendChild(leaves);
+        ground.appendChild(tree);
+    }
+
+    // Generate random wildlife based on score
+    const numAnimals = Math.floor(saved / 15);
+    const animalTypes = ['🦅', '🦋', '🦌', '🐸', '🐇', '🐿️'];
+    for (let i = 0; i < numAnimals; i++) {
+        const rng = mulberry32(seed + i * 7777);
+        const animal = document.createElement('div');
+        animal.className = 'proc-animal proc-element';
+        animal.textContent = animalTypes[Math.floor(rng() * animalTypes.length)];
+        
+        const x = rng() * (maxRight - 50);
+        animal.style.left = `${x}px`;
+
+        if (['🦅', '🦋'].includes(animal.textContent)) {
+            sky.appendChild(animal);
+            animal.style.top = `${20 + rng() * 100}px`;
+        } else {
+            ground.appendChild(animal);
+            animal.style.bottom = `${rng() * 40}px`;
+            animal.style.zIndex = 150;
+        }
+    }
+
+    // Update infinite scroll container width
+    scrollArea.style.width = `${maxRight}px`;
+    
+    let rankMsg = "";
+    if (saved < 15) rankMsg = "A seedling takes root.";
+    else if (saved < 40) rankMsg = "Life is flourishing.";
+    else if (saved < 100) rankMsg = "A river flows, nourishing the land.";
+    else rankMsg = "A thriving ecosystem stretches endlessly!";
+
+    msg.textContent = `🌍 ${currentUser}'s ${biome.name} Ecosystem — ${rankMsg}`;
 }
 
-// Initialize empty desert state
-updateEcosystem(0);
+// ── User Auth Initialization ──
+document.addEventListener('DOMContentLoaded', () => {
+    const userBtn = document.getElementById('btn-user-profile');
+    if (userBtn) {
+        userBtn.textContent = currentUser !== 'Guest' ? currentUser : 'Sign In';
+        userBtn.addEventListener('click', () => {
+            const name = prompt("Enter a Username to generate your unique ecosystem seed:", currentUser !== 'Guest' ? currentUser : '');
+            if (name) {
+                currentUser = name.trim();
+                localStorage.setItem('treeRoute_user', currentUser);
+                userBtn.textContent = currentUser;
+                updateEcosystem(getTotals().saved); // Re-render the ecosystem immediately
+            }
+        });
+    }
+    
+    // Initialize empty desert state
+    updateEcosystem(getTotals().saved);
+});
+
 
 // ── Journey Log ──
 function updateJourneyLog() {
