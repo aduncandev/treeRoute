@@ -266,13 +266,13 @@ function updateJourneyLog() {
     items.innerHTML = '';
     [...journeys].reverse().slice(0, 5).forEach(j => {
         const div = document.createElement('div');
-        div.className = 'journey-item';
+        div.className = 'log-item';
         div.innerHTML = `
-            <div>
-                <div class="journey-item-route">${j.from} → ${j.to}</div>
-                <div class="journey-item-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</div>
+            <div class="log-details">
+                <span class="log-route">${j.from} → ${j.to}</span>
+                <span class="log-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</span>
             </div>
-            <div class="journey-item-saved">+${j.co2Saved.toFixed(2)} kg</div>`;
+            <span class="log-saved">+${j.co2Saved.toFixed(2)} kg</span>`;
         items.appendChild(div);
     });
 }
