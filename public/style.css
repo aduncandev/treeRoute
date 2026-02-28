@@ -93,6 +93,13 @@ body {
     border-radius: 8px;
 }
 
+.navbar-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
 .navbar-links {
     display: flex;
     gap: 4px;
@@ -544,13 +551,14 @@ body {
 .eco-scene-container {
     width: 100%;
     height: 300px;
-    border-radius: 12px;
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
     margin-bottom: 18px;
     border: 1px solid var(--gray-200);
     cursor: pointer;
     user-select: none;
+    box-shadow: inset 0 -30px 60px rgba(0, 0, 0, 0.08);
 }
 
 .eco-sky {
@@ -559,22 +567,78 @@ body {
     left: 0;
     right: 0;
     height: 230px;
-    background: #e2e8f0;
+    background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 100%);
     transition: background 1.5s ease;
     z-index: 1;
 }
 
 .sun {
     position: absolute;
-    top: 24px;
-    right: 24px;
-    width: 40px;
-    height: 40px;
-    background: #fbbf24;
+    top: 22px;
+    right: 28px;
+    width: 44px;
+    height: 44px;
+    background: radial-gradient(circle, #fde68a 30%, #fbbf24 100%);
     border-radius: 50%;
-    box-shadow: 0 0 20px #fbbf24;
+    box-shadow: 0 0 30px 8px rgba(251, 191, 36, 0.5), 0 0 60px 20px rgba(251, 191, 36, 0.2);
     opacity: 0;
     transition: all 1.5s ease;
+    animation: sunPulse 4s ease-in-out infinite;
+}
+
+@keyframes sunPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 30px 8px rgba(251, 191, 36, 0.5), 0 0 60px 20px rgba(251, 191, 36, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 40px 12px rgba(251, 191, 36, 0.6), 0 0 80px 30px rgba(251, 191, 36, 0.25);
+    }
+}
+
+.cloud {
+    position: absolute;
+    font-size: 28px;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+}
+
+.cloud-1 {
+    top: 18px;
+    left: 12%;
+    font-size: 32px;
+    animation: cloudDrift1 25s linear infinite;
+}
+
+.cloud-2 {
+    top: 50px;
+    left: 55%;
+    font-size: 22px;
+    animation: cloudDrift2 35s linear infinite;
+}
+
+@keyframes cloudDrift1 {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(120px);
+    }
+}
+
+@keyframes cloudDrift2 {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100px);
+    }
 }
 
 .bird {
@@ -586,14 +650,72 @@ body {
 }
 
 .bird-1 {
-    top: 35px;
+    top: 30px;
     left: 20%;
+    animation: birdFly1 8s ease-in-out infinite;
 }
 
 .bird-2 {
-    top: 60px;
-    left: 35%;
+    top: 55px;
+    left: 38%;
     font-size: 14px;
+    animation: birdFly2 12s ease-in-out infinite;
+}
+
+.bird-3 {
+    top: 40px;
+    left: 65%;
+    font-size: 16px;
+    opacity: 0;
+    animation: birdFly3 10s ease-in-out infinite;
+}
+
+@keyframes birdFly1 {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(30px, -8px);
+    }
+
+    50% {
+        transform: translate(60px, 3px);
+    }
+
+    75% {
+        transform: translate(30px, -5px);
+    }
+}
+
+@keyframes birdFly2 {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    33% {
+        transform: translate(-20px, -6px);
+    }
+
+    66% {
+        transform: translate(-40px, 4px);
+    }
+}
+
+@keyframes birdFly3 {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    50% {
+        transform: translate(25px, -10px);
+    }
 }
 
 .eco-ground {
@@ -601,7 +723,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70px;
+    height: 75px;
     background: #d6cfc4;
     transition: background 1.5s ease;
     z-index: 2;
@@ -609,15 +731,57 @@ body {
 
 .river {
     position: absolute;
-    bottom: 8px;
+    bottom: 6px;
     left: -10%;
     right: -10%;
-    height: 10px;
-    background: #60a5fa;
+    height: 12px;
+    background: linear-gradient(90deg, #60a5fa, #38bdf8, #60a5fa);
+    background-size: 200% 100%;
     border-radius: 50%;
     opacity: 0;
     transform: scaleY(0);
     transition: all 1.5s ease;
+    animation: riverFlow 3s linear infinite;
+}
+
+@keyframes riverFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
+.flower-patch {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.flower {
+    position: absolute;
+    bottom: 18px;
+    font-size: 14px;
+    animation: flowerSway 3s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+@keyframes flowerSway {
+
+    0%,
+    100% {
+        transform: rotate(-3deg);
+    }
+
+    50% {
+        transform: rotate(3deg);
+    }
 }
 
 .tree-base {
@@ -625,8 +789,8 @@ body {
     bottom: 35px;
     left: 50%;
     transform: translateX(-50%);
-    width: 180px;
-    height: 220px;
+    width: 200px;
+    height: 230px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -636,26 +800,73 @@ body {
 .trunk {
     position: absolute;
     bottom: 0;
-    width: 20px;
+    width: 22px;
     height: 0;
-    background: #7c3f1a;
-    border-radius: 4px 4px 2px 2px;
+    background: linear-gradient(90deg, #5c2d0e 0%, #8b5e3c 40%, #7c3f1a 60%, #5c2d0e 100%);
+    border-radius: 6px 6px 4px 4px;
     transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.15);
+}
+
+.branch {
+    position: absolute;
+    background: linear-gradient(90deg, #7c3f1a, #8b5e3c);
+    border-radius: 3px;
+    transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0;
+    height: 6px;
+}
+
+.branch-left {
+    top: 25%;
+    right: 100%;
+    width: 0;
+    transform: rotate(-25deg);
+    transform-origin: right center;
+}
+
+.branch-right {
+    top: 45%;
+    left: 100%;
+    width: 0;
+    transform: rotate(20deg);
+    transform-origin: left center;
 }
 
 .leaves-wrap {
     position: absolute;
     bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    left: 50%;
+    transform: translateX(-50%);
     transition: bottom 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 .leaf-circle {
     border-radius: 50%;
     background: var(--green-500);
     transition: all 1s ease;
+    position: absolute;
+}
+
+.leaf-circle.sway {
+    animation: leafSway 4s ease-in-out infinite;
+}
+
+@keyframes leafSway {
+
+    0%,
+    100% {
+        transform: translateX(0) rotate(0);
+    }
+
+    25% {
+        transform: translateX(-3px) rotate(-1deg);
+    }
+
+    75% {
+        transform: translateX(3px) rotate(1deg);
+    }
 }
 
 .animal {
@@ -667,21 +878,110 @@ body {
 }
 
 .deer {
-    bottom: 30px;
-    right: 15%;
-    font-size: 22px;
+    bottom: 28px;
+    right: 12%;
+    font-size: 24px;
+    animation: animalBob 4s ease-in-out infinite;
+}
+
+.rabbit {
+    bottom: 25px;
+    right: 28%;
+    font-size: 18px;
+    animation: animalBob 3s ease-in-out infinite 0.5s;
 }
 
 .butterfly {
-    bottom: 60px;
-    left: 25%;
-    font-size: 14px;
+    bottom: 80px;
+    left: 22%;
+    font-size: 16px;
+    animation: butterflyFloat 6s ease-in-out infinite;
 }
 
 .frog {
-    bottom: 10px;
-    left: 40%;
-    font-size: 13px;
+    bottom: 8px;
+    left: 42%;
+    font-size: 14px;
+    animation: animalBob 2.5s ease-in-out infinite 1s;
+}
+
+.squirrel {
+    bottom: 50px;
+    left: 55%;
+    font-size: 16px;
+    animation: animalBob 3.5s ease-in-out infinite 0.3s;
+}
+
+.hedgehog {
+    bottom: 22px;
+    left: 10%;
+    font-size: 16px;
+    animation: animalBob 5s ease-in-out infinite 0.7s;
+}
+
+@keyframes animalBob {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes butterflyFloat {
+
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0);
+    }
+
+    25% {
+        transform: translate(15px, -12px) rotate(5deg);
+    }
+
+    50% {
+        transform: translate(30px, -5px) rotate(-3deg);
+    }
+
+    75% {
+        transform: translate(15px, -15px) rotate(4deg);
+    }
+}
+
+.particle-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.leaf-particle {
+    position: absolute;
+    font-size: 12px;
+    opacity: 0;
+    animation: leafFall 4s ease-in-out forwards;
+}
+
+@keyframes leafFall {
+    0% {
+        opacity: 0.8;
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(30px, 200px) rotate(360deg);
+    }
 }
 
 .eco-bubble {
@@ -1220,5 +1520,295 @@ body {
 
     .mode-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ── Leaflet Map ── */
+.map-container {
+    position: relative;
+    height: 220px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--gray-200);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.leaflet-container {
+    font-family: 'DM Sans', system-ui !important;
+}
+
+.map-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.map-ctrl-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--card-bg);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xs);
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+}
+
+.map-ctrl-btn:hover {
+    background: var(--gray-50);
+    color: var(--green-500);
+}
+
+.route-info-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 500;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xs);
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--green-700);
+    box-shadow: var(--shadow-sm);
+}
+
+.route-info-sep {
+    color: var(--gray-300);
+    margin: 0 6px;
+}
+
+/* ── Search Dropdown ── */
+.search-input-wrap {
+    position: relative;
+}
+
+.search-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xs);
+    z-index: 600;
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.search-dropdown.show {
+    display: block;
+}
+
+.search-dropdown-item {
+    padding: 10px 13px;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+}
+
+.search-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.search-dropdown-item:hover,
+.search-dropdown-item:active {
+    background: var(--green-50);
+}
+
+.input-hint {
+    font-weight: 400;
+    color: var(--green-500);
+    font-size: 0.75rem;
+    margin-left: 4px;
+}
+
+/* ── Custom Leaflet Markers ── */
+.marker-pin {
+    width: 24px;
+    height: 24px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.marker-pin.origin {
+    background: var(--gray-900);
+    border: 2px solid #fff;
+}
+
+.marker-pin.dest {
+    background: var(--green-500);
+    border: 2px solid #fff;
+}
+
+.marker-pin span {
+    transform: rotate(45deg);
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+}
+
+/* ── Mobile Bottom Nav ── */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--card-bg);
+    border-top: 1px solid var(--gray-200);
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.bnav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    font-family: inherit;
+    font-size: 0.62rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: color 0.2s;
+}
+
+.bnav-btn.active {
+    color: var(--green-500);
+}
+
+.bnav-btn svg {
+    transition: all 0.2s;
+}
+
+/* ── Mobile Responsive Overrides ── */
+@media (max-width: 900px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+
+    body {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .navbar-links {
+        display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 14px 14px;
+    }
+
+    .stat-card-value {
+        font-size: 1.4rem;
+    }
+
+    .header h1 {
+        font-size: 1.35rem;
+    }
+
+    .page-wrapper {
+        padding: 16px 12px 48px;
+    }
+
+    .navbar {
+        padding: 0 12px;
+    }
+
+    .mode-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .mode-btn {
+        padding: 8px 4px;
+    }
+
+    .card {
+        padding: 18px 14px;
+    }
+
+    .map-container {
+        height: 200px;
+        margin-left: -14px;
+        margin-right: -14px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .eco-scene-container {
+        height: 240px;
+    }
+
+    /* Toast at top on mobile */
+    #toastContainer {
+        bottom: auto;
+        top: 72px;
+        right: 12px;
+        left: 12px;
+    }
+
+    .toast {
+        max-width: 100%;
+    }
+
+    .leaderboard-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+        padding: 12px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
     }
 }

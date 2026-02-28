@@ -21,7 +21,6 @@ async function getDailyChallenges(userId) {
     for (let i = 0; i < 3; i++) indices.push((parseInt(seed) + i * 7 + userId) % CHALLENGE_POOL.length);
     const unique = [...new Set(indices)];
     while (unique.length < 3) unique.push((unique[unique.length - 1] + 1) % CHALLENGE_POOL.length);
-
     return Promise.all(unique.slice(0, 3).map(async idx => {
         const ch = CHALLENGE_POOL[idx];
         const completed = await ch.check(userId);
@@ -60,7 +59,7 @@ router.get('/', authMiddleware, async (req, res) => {
         let recommendation = null;
         const carJourneys = await db.get("SELECT COUNT(*) as c, COALESCE(AVG(distance_km), 0) as avgDist FROM journeys WHERE user_id = ? AND mode = 'car'", [req.userId]);
         if (carJourneys.c > 0) {
-            const potentialSaved = +(carJourneys.avgDist * 0.21 * 2 * 4).toFixed(1);
+            const potentialSaved = +(carJourneys.avgDist * 0.171 * 2 * 4).toFixed(1);
             recommendation = `If you cycle instead of driving twice a week, you'd save ${potentialSaved}kg CO2 per month!`;
         }
 

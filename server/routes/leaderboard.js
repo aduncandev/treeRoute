@@ -8,7 +8,6 @@ router.get('/', optionalAuth, async (req, res) => {
     const type = req.query.type || 'co2';
     const period = req.query.period || 'all';
     const validTypes = ['co2', 'distance', 'streak', 'xp'];
-
     if (!validTypes.includes(type)) return res.status(400).json({ error: 'Invalid leaderboard type' });
 
     try {
@@ -29,14 +28,11 @@ router.get('/', optionalAuth, async (req, res) => {
 
         const rows = await db.all(query);
         let userRank = null;
-
         if (req.userId) {
             const idx = rows.findIndex(r => r.id === req.userId);
             if (idx >= 0) userRank = idx + 1;
         }
-
         const units = { co2: 'kg CO₂', distance: 'km', xp: 'XP', streak: 'days' };
-
         res.json({
             type, period, unit: units[type],
             entries: rows.map((r, i) => ({ rank: i + 1, username: r.username, level: r.level, value: +parseFloat(r.value).toFixed(1), isCurrentUser: r.id === req.userId })),

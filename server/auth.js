@@ -18,7 +18,6 @@ function authMiddleware(req, res, next) {
     }
 }
 
-// Optional auth - sets userId if token present, but doesn't block
 function optionalAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -26,9 +25,7 @@ function optionalAuth(req, res, next) {
             const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
             req.userId = decoded.id;
             req.username = decoded.username;
-        } catch (err) {
-            // Ignore invalid tokens
-        }
+        } catch (err) { }
     }
     next();
 }

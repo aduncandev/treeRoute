@@ -3,12 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ffffff">
     <title>TreeRoute — CO₂ Journey Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -50,7 +55,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <a href="#" class="navbar-brand" onclick="navigateTo('dashboard'); return false;">
-            <div class="header-icon">🌿</div>
+            <img src="TreeRouteLogo2.png" alt="TreeRoute" class="navbar-logo">
             <span>TreeRoute</span>
         </a>
         <div class="navbar-links">
@@ -140,6 +145,32 @@
                     <div class="card-title">Add Journey</div>
                     <div class="card-subtitle">Track your local trips and their carbon footprint</div>
 
+                    <!-- Map -->
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <div class="map-controls">
+                            <button class="map-ctrl-btn" onclick="locateMe()" title="My location">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="4" />
+                                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                                </svg>
+                            </button>
+                            <button class="map-ctrl-btn" onclick="clearRoute()" title="Clear">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="route-info-overlay" id="routeInfoOverlay" style="display:none">
+                            <span id="routeDistText">—</span>
+                            <span class="route-info-sep">·</span>
+                            <span id="routeTimeText">—</span>
+                        </div>
+                    </div>
+
                     <!-- Origin -->
                     <div class="input-group">
                         <div class="input-label">
@@ -150,8 +181,11 @@
                             </svg>
                             From (Point A)
                         </div>
-                        <input type="text" id="originInput" class="input-field" placeholder="e.g., Home, 123 Main St"
-                            autocomplete="off">
+                        <div class="search-input-wrap">
+                            <input type="text" id="originInput" class="input-field" placeholder="Search or tap the map"
+                                autocomplete="off">
+                            <div class="search-dropdown" id="originResults"></div>
+                        </div>
                     </div>
 
                     <!-- Destination -->
@@ -164,11 +198,14 @@
                             </svg>
                             To (Point B)
                         </div>
-                        <input type="text" id="destInput" class="input-field" placeholder="e.g., Office, 456 Oxford St"
-                            autocomplete="off">
+                        <div class="search-input-wrap">
+                            <input type="text" id="destInput" class="input-field" placeholder="Search or tap the map"
+                                autocomplete="off">
+                            <div class="search-dropdown" id="destResults"></div>
+                        </div>
                     </div>
 
-                    <!-- Distance -->
+                    <!-- Distance (auto-filled from route, or manual) -->
                     <div class="input-group">
                         <div class="input-label">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -176,10 +213,11 @@
                                 <path d="M18 6L6 18" />
                                 <path d="M6 6l12 12" />
                             </svg>
-                            Distance (km)
+                            Distance (km) <span class="input-hint" id="distHint"></span>
                         </div>
-                        <input type="number" id="distanceInput" class="input-field" placeholder="e.g., 5.2" min="0.1"
-                            step="0.1" autocomplete="off">
+                        <input type="number" id="distanceInput" class="input-field"
+                            placeholder="Auto-calculated from map, or enter manually" min="0.1" step="0.1"
+                            autocomplete="off">
                     </div>
 
                     <!-- Transport Mode -->
@@ -246,19 +284,30 @@
                     <div class="eco-scene-container" onclick="clickTree()">
                         <div class="eco-sky" id="ecoSky">
                             <div class="sun" id="ecoSun"></div>
+                            <div class="cloud cloud-1" id="ecoCloud1">☁️</div>
+                            <div class="cloud cloud-2" id="ecoCloud2">☁️</div>
                             <div class="bird bird-1">🦅</div>
-                            <div class="bird bird-2">🦅</div>
+                            <div class="bird bird-2">🕊️</div>
+                            <div class="bird bird-3">🦜</div>
                         </div>
                         <div class="eco-ground" id="ecoGround">
                             <div class="river" id="ecoRiver"></div>
+                            <div class="flower-patch" id="ecoFlowers"></div>
                             <div class="tree-base">
-                                <div class="trunk" id="trunk"></div>
+                                <div class="trunk" id="trunk">
+                                    <div class="branch branch-left" id="branchLeft"></div>
+                                    <div class="branch branch-right" id="branchRight"></div>
+                                </div>
                                 <div class="leaves-wrap" id="leavesWrap"></div>
                             </div>
                             <div class="animal deer">🦌</div>
+                            <div class="animal rabbit">🐇</div>
                             <div class="animal butterfly">🦋</div>
                             <div class="animal frog">🐸</div>
+                            <div class="animal squirrel">🐿️</div>
+                            <div class="animal hedgehog">🦔</div>
                         </div>
+                        <div class="particle-layer" id="particleLayer"></div>
                     </div>
 
                     <div class="co2-display">
@@ -331,6 +380,33 @@
         </div>
 
     </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <button class="bnav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+        </button>
+        <button class="bnav-btn" data-page="journeys" onclick="navigateTo('journeys')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            <span>Journeys</span>
+        </button>
+        <button class="bnav-btn" data-page="leaderboard" onclick="navigateTo('leaderboard')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 22h16" />
+                <path d="M10 22V2h4v20" />
+                <path d="M6 22V10h4" />
+                <path d="M14 22V10h4" />
+            </svg>
+            <span>Rank</span>
+        </button>
+    </nav>
 
     <script src="app.js"></script>
 </body>
