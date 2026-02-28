@@ -21,7 +21,7 @@
         <a href="#" class="nav-link">Leaderboard</a>
     </div>
     <div class="navbar-auth">
-        <button class="btn-signin" id="btn-user-profile">Sign In</button>
+        <button class="btn-signin">Sign In</button>
     </div>
 </nav>
 
@@ -140,15 +140,23 @@
             <p class="tree-panel-sub" id="treeMessage">A barren desert. Save CO₂ to bring it to life!</p>
 
             <!-- Scene -->
-            <div class="eco-scene-container" id="ecoScene">
-                <div class="eco-scroll-area" id="ecoScrollArea">
-                    <div class="eco-sky" id="ecoSky">
-                        <div class="sun" id="ecoSun"></div>
+            <div class="eco-scene-container">
+                <div class="eco-sky" id="ecoSky">
+                    <div class="sun" id="ecoSun"></div>
+                    <div class="bird bird-1">🦅</div>
+                    <div class="bird bird-2">🦅</div>
+                </div>
+                <div class="eco-ground" id="ecoGround">
+                    <div class="river" id="ecoRiver"></div>
+                    
+                    <div class="tree-base">
+                        <div class="trunk" id="trunk"></div>
+                        <div class="leaves-wrap" id="leavesWrap"></div>
                     </div>
-                    <div class="eco-ground" id="ecoGround">
-                        <div class="river" id="ecoRiver"></div>
-                        <!-- Procedural Trees and Animals inject here -->
-                    </div>
+
+                    <div class="animal deer">🦌</div>
+                    <div class="animal butterfly">🦋</div>
+                    <div class="animal frog">🐸</div>
                 </div>
             </div>
 
