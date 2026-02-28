@@ -124,6 +124,28 @@
                 Add Journey
             </button>
 
+            <!-- Comparison Visual -->
+            <div class="comparison-visual" id="comparisonVisual" style="display: none;">
+                <h4 style="margin-bottom: 12px; font-size: 0.95rem; color: #374151;">Last Journey Impact</h4>
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <div class="bar-label">Your Trip</div>
+                        <div class="bar-container">
+                            <div class="bar fill-green" id="barYourTrip"></div>
+                        </div>
+                        <div class="bar-value" id="valYourTrip">0.00 kg</div>
+                    </div>
+                    <div class="bar-row" style="margin-top: 10px;">
+                        <div class="bar-label">Driving</div>
+                        <div class="bar-container">
+                            <div class="bar fill-dark" id="barDriving"></div>
+                        </div>
+                        <div class="bar-value" id="valDriving">0.00 kg</div>
+                    </div>
+                </div>
+                <div class="comparison-result" id="comparisonResultText"></div>
+            </div>
+
             <!-- Journey Log -->
             <div class="journey-log" id="journeyLog">
                 <h4>Recent Journeys</h4>

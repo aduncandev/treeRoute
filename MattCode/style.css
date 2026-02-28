@@ -734,3 +734,54 @@ body {
     font-size: 0.9rem;
     color: #6b7280;
 }
+
+/* ── Comparison Visual ── */
+.comparison-visual {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+}
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.bar-label {
+    width: 70px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+.bar-container {
+    flex: 1;
+    background: #f3f4f6;
+    height: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 8px;
+    transition: width 1s ease-out;
+}
+.bar.fill-green { background: #22c55e; }
+.bar.fill-dark { background: #9ca3af; }
+.bar-value {
+    width: 60px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111827;
+}
+.comparison-result {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #22c55e;
+    font-weight: 600;
+    text-align: center;
+}

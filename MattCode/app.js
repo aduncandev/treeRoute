@@ -102,8 +102,40 @@ document.getElementById('addJourneyBtn').addEventListener('click', () => {
     document.getElementById('destInput').value   = '';
     coordsA = null; coordsB = null;
 
+    updateComparisonVisual(co2Emitted, distKm * CAR_CO2);
     updateUI();
 });
+
+// ── Comparison Visual ──
+function updateComparisonVisual(yourCo2, carCo2) {
+    const visual = document.getElementById('comparisonVisual');
+    if (!visual) return;
+    visual.style.display = 'block';
+
+    document.getElementById('valYourTrip').textContent = yourCo2.toFixed(2) + ' kg';
+    document.getElementById('valDriving').textContent = carCo2.toFixed(2) + ' kg';
+
+    const maxVal = Math.max(yourCo2, carCo2, 0.01); // avoid div by 0
+    
+    // Animate bars
+    setTimeout(() => {
+        document.getElementById('barYourTrip').style.width = ((yourCo2 / maxVal) * 100) + '%';
+        document.getElementById('barDriving').style.width = ((carCo2 / maxVal) * 100) + '%';
+    }, 50);
+
+    const resultText = document.getElementById('comparisonResultText');
+    const saved = carCo2 - yourCo2;
+    if (saved > 0) {
+        resultText.textContent = `You saved ${saved.toFixed(2)} kg of CO₂! 🎉`;
+        resultText.style.color = '#22c55e';
+    } else if (saved === 0) {
+        resultText.textContent = `You emitted ${yourCo2.toFixed(2)} kg of CO₂.`;
+        resultText.style.color = '#6b7280';
+    } else {
+        resultText.textContent = `You emitted ${Math.abs(saved).toFixed(2)} kg more than standard driving.`;
+        resultText.style.color = '#ef4444';
+    }
+}
 
 // ── Update All UI ──
 function updateUI() {
