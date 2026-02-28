@@ -144,7 +144,7 @@ function updateEcosystem(saved) {
     const sun = document.getElementById('ecoSun');
     const river = document.getElementById('ecoRiver');
     const msg = document.getElementById('treeMessage');
-    
+
     // Animals
     const birds = document.querySelectorAll('.bird');
     const deer = document.querySelector('.deer');
@@ -165,7 +165,7 @@ function updateEcosystem(saved) {
         ground.style.background = '#d6cfc4'; // Desert sand
         sun.style.opacity = '0'; sun.style.transform = 'translateY(20px)';
         river.style.opacity = '0'; river.style.transform = 'scaleY(0)';
-        
+
         birds.forEach(b => { b.style.opacity = '0'; b.style.transform = 'translateX(-20px)'; });
         deer.style.opacity = '0'; deer.style.transform = 'translateX(20px)';
         butterfly.style.opacity = '0'; butterfly.style.transform = 'translateY(10px)';
@@ -189,14 +189,14 @@ function updateEcosystem(saved) {
     } else if (saved <= 40) {
         // Level 2: Grass & Small Animals
         const p = (saved - 15) / 25;
-        sky.style.background = '#bae6fd'; 
+        sky.style.background = '#bae6fd';
         sun.style.opacity = '1'; sun.style.transform = 'translateY(0)';
-        
+
         // Ground turns green
         const r = 214 - (p * (214 - 134)); // d6 -> 86
         const g = 207 + (p * (239 - 207)); // cf -> ef
         const b = 196 - (p * (196 - 172)); // c4 -> ac
-        ground.style.background = `rgb(${r}, ${g}, ${b})`; 
+        ground.style.background = `rgb(${r}, ${g}, ${b})`;
 
         birds.forEach(b => { b.style.opacity = p.toString(); b.style.transform = `translateX(${p * 20}px)`; });
         butterfly.style.opacity = p.toString(); butterfly.style.transform = `translateY(-${p * 10}px)`;
@@ -212,7 +212,7 @@ function updateEcosystem(saved) {
         // Level 3: River & Frogs
         const p = (saved - 40) / 60;
         ground.style.background = '#86efac';
-        
+
         river.style.opacity = p.toString();
         river.style.transform = `scaleY(${p})`;
         frog.style.opacity = p.toString();
@@ -235,7 +235,7 @@ function updateEcosystem(saved) {
         ground.style.background = '#86efac';
         river.style.opacity = '1'; river.style.transform = 'scaleY(1)';
         frog.style.opacity = '1';
-        
+
         deer.style.opacity = p.toString();
         deer.style.transform = `translateX(-${p * 15}px)`;
 
