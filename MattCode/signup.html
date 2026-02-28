@@ -20,7 +20,8 @@
         <h2 class="auth-title">Create an account</h2>
         <p class="auth-subtitle">Start tracking your CO<sub>2</sub> savings today</p>
 
-        <form id="signupForm" class="auth-form" action="../index.html" onsubmit="handleSignUp(event)">
+        <!-- Removed the action attribute to prevent default HTML form submission -->
+        <form id="signupForm" class="auth-form" onsubmit="handleSignUp(event)">
             
             <div class="input-group">
                 <label class="input-label" for="fullname">Full Name</label>
@@ -72,17 +73,44 @@
 </div>
 
 <script>
-function handleSignUp(event) {
+async function handleSignUp(event) {
     event.preventDefault(); // Prevent default submission
     
     const fullname = document.getElementById('fullname').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const terms = document.getElementById('terms').checked;
+    const submitBtn = document.querySelector('.btn-auth');
     
-    if (fullname && email && password && terms) {
-        // Redirect to dashboard on successful sign up
-        window.location.href = '../index.html';
+    if (!terms) return;
+
+    // Change button text to show it's loading
+    submitBtn.textContent = 'Creating account...';
+    submitBtn.disabled = true;
+
+    try {
+        // Pointing to the new PHP API
+        const response = await fetch('../api/signup.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fullname, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && !data.error) {
+            alert('Account created! Please sign in.');
+            window.location.href = 'signin.html';
+        } else {
+            alert('Error: ' + (data.error || 'Something went wrong'));
+            submitBtn.textContent = 'Create Account';
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error. Could not connect to server.');
+        submitBtn.textContent = 'Create Account';
+        submitBtn.disabled = false;
     }
 }
 </script>
