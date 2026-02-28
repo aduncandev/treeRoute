@@ -164,22 +164,34 @@ async function fetchUser() {
         updateEcosystem(0);
     }
 }
-
 function updateNavUser() {
     const area = document.getElementById('nav-auth-area');
     if (currentUser) {
+        const initial = currentUser.username.charAt(0).toUpperCase();
+        
+        // Use profile_pic if it exists, otherwise use the initial
+        const avatarContent = currentUser.profile_pic 
+            ? `<img src="${currentUser.profile_pic}" class="nav-avatar-img">`
+            : `<span class="nav-avatar-initial">${initial}</span>`;
+        
         area.innerHTML = `
             <div class="nav-user">
-                <span class="level-badge">Lvl ${currentUser.level || 1}</span>
-                <span class="username">${currentUser.username}</span>
-                <button class="btn-ghost" onclick="logout()">Logout</button>
+                <a href="javascript:void(0)" onclick="navigateTo('profile')" class="nav-profile-link">
+                    <div class="nav-avatar-container">
+                        ${avatarContent}
+                    </div>
+                    <div class="nav-user-info">
+                        <span class="username">${currentUser.username}</span>
+                        <span class="level-badge">Lvl ${currentUser.level || 1}</span>
+                    </div>
+                </a>
+                <button class="btn-ghost logout-btn" onclick="logout()">Logout</button>
             </div>
         `;
     } else {
         area.innerHTML = `<button class="btn-signin" onclick="showAuthModal('login')">Sign In</button>`;
     }
 }
-
 // ===== NAVIGATION =====
 function navigateTo(page) {
     currentPage = page;
