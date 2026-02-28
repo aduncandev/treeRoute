@@ -6,11 +6,6 @@
     <title>CO₂ Journey Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet Map CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -92,7 +87,7 @@
                     From (Point A)
                 </div>
                 <div class="input-wrapper">
-                    <input type="text" id="originInput" class="input-field" placeholder="e.g., London Eye" autocomplete="off">
+                    <input type="text" id="originInput" class="input-field" placeholder="e.g., 123 Main St, London" autocomplete="off">
                     <div class="autocomplete-list" id="originList"></div>
                 </div>
             </div>
@@ -104,7 +99,7 @@
                     To (Point B)
                 </div>
                 <div class="input-wrapper">
-                    <input type="text" id="destInput" class="input-field" placeholder="e.g., Tower Bridge" autocomplete="off">
+                    <input type="text" id="destInput" class="input-field" placeholder="e.g., 456 Oxford St, London" autocomplete="off">
                     <div class="autocomplete-list" id="destList"></div>
                 </div>
             </div>
@@ -184,14 +179,6 @@
         </div>
 
     </div>
-
-    <!-- Map Section -->
-    <div class="card map-card">
-        <div class="card-title">Journey Map</div>
-        <div class="card-subtitle">Select your origin and destination to see the route</div>
-        <div id="map"></div>
-    </div>
-
 </div>
 
 <div class="toast" id="toast"></div>
