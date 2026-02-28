@@ -4,321 +4,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TreeRoute — Sustainable Travel Tracker</title>
+    <title>TreeRoute — CO₂ Journey Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
 </head>
 
 <body>
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <a href="#" class="navbar-brand" onclick="navigateTo('dashboard')">
-            <span class="tree-icon">🌳</span> TreeRoute
-        </a>
-        <ul class="navbar-nav">
-            <li><a href="#" data-page="dashboard" class="active" onclick="navigateTo('dashboard')">Dashboard</a></li>
-            <li><a href="#" data-page="journeys" onclick="navigateTo('journeys')">My Journeys</a></li>
-            <li><a href="#" data-page="leaderboard" onclick="navigateTo('leaderboard')">Leaderboard</a></li>
-            <li id="nav-auth-area">
-                <button class="btn btn-sm btn-primary" onclick="showAuthModal('login')">Sign In</button>
-            </li>
-        </ul>
-    </nav>
 
-    <!-- TOAST CONTAINER -->
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
-    <!-- AUTH MODAL -->
+    <!-- Auth Modal -->
     <div class="modal-overlay" id="authModal">
-        <div class="modal">
-            <h2 id="authTitle">Sign In</h2>
-            <p id="authSubtitle">Track your impact and compete with others</p>
-            <div class="auth-error" id="authError"></div>
-            <form id="authForm" onsubmit="handleAuth(event)">
-                <div class="form-group" id="usernameGroup">
-                    <label>Username</label>
-                    <input type="text" id="authUsername" placeholder="Your username" autocomplete="username">
+        <div class="modal-card">
+            <button class="modal-close" onclick="hideAuthModal()">&times;</button>
+            <div class="modal-brand">🌿</div>
+            <h2 class="modal-title" id="authTitle">Sign In</h2>
+            <p class="modal-subtitle" id="authSubtitle">Track your impact and compete with others</p>
+            <div class="auth-error" id="authError" style="display:none"></div>
+            <form class="auth-form" onsubmit="handleAuth(event)">
+                <div class="input-group">
+                    <label class="input-label">Username</label>
+                    <input type="text" id="authUsername" class="input-field" placeholder="your username" required>
                 </div>
-                <div class="form-group" id="emailGroup" style="display:none">
-                    <label>Email</label>
-                    <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+                <div class="input-group" id="emailGroup" style="display:none">
+                    <label class="input-label">Email</label>
+                    <input type="email" id="authEmail" class="input-field" placeholder="you@example.com">
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="authPassword" class="input-field" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn btn-primary" id="authSubmitBtn">Sign In</button>
+                <button type="submit" class="btn-add" id="authSubmitBtn" style="margin-top:8px">Sign In</button>
             </form>
-            <div class="modal-switch">
-                <span id="authSwitchText">Don't have an account?</span>
-                <a id="authSwitchLink" onclick="toggleAuthMode()">Register</a>
-            </div>
-            <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:12px" onclick="hideAuthModal()">Continue
-                as Guest</button>
+            <p class="modal-footer">
+                <span id="authSwitchText">Don't have an account? </span>
+                <a href="#" id="authSwitchLink" onclick="toggleAuthMode(); return false;">Register</a>
+            </p>
         </div>
     </div>
 
-    <div class="container">
-        <!-- ==================== DASHBOARD ==================== -->
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-brand" onclick="navigateTo('dashboard'); return false;">
+            <div class="header-icon">🌿</div>
+            <span>TreeRoute</span>
+        </a>
+        <div class="navbar-links">
+            <a href="#" class="nav-link active" data-page="dashboard"
+                onclick="navigateTo('dashboard'); return false;">Dashboard</a>
+            <a href="#" class="nav-link" data-page="journeys" onclick="navigateTo('journeys'); return false;">My
+                Journeys</a>
+            <a href="#" class="nav-link" data-page="leaderboard"
+                onclick="navigateTo('leaderboard'); return false;">Leaderboard</a>
+        </div>
+        <div class="navbar-auth" id="nav-auth-area">
+            <button class="btn-signin" onclick="showAuthModal('login')">Sign In</button>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+
+        <!-- ========== DASHBOARD PAGE ========== -->
         <div class="page-section active" id="page-dashboard">
-            <!-- Guest Banner -->
-            <div class="guest-banner" id="guestBanner" style="display:none">
-                ⚠️ You're in guest mode. <a onclick="showAuthModal('register')">Sign up</a> to save your progress and
-                appear on leaderboards!
-            </div>
 
-            <!-- XP Bar -->
-            <div class="xp-bar-container" id="xpBarSection">
-                <div class="xp-header">
-                    <div class="xp-level">Level <span id="userLevel">1</span> — <span class="level-name"
-                            id="levelName">Seedling</span></div>
-                    <div class="xp-numbers"><span id="currentXp">0</span> / <span id="nextLevelXp">50</span> XP</div>
+            <!-- Header -->
+            <div class="header">
+                <div class="header-title">
+                    <h1>CO<sub>2</sub> Journey Tracker</h1>
                 </div>
-                <div class="xp-bar">
-                    <div class="xp-fill" id="xpFill" style="width: 0%"></div>
-                </div>
+                <p class="header-sub">Track your local journeys and see how much CO₂ you save by choosing green
+                    transport</p>
             </div>
 
-            <!-- Streak -->
-            <div class="streak-display" id="streakDisplay">
-                <div class="streak-flame">🔥</div>
-                <div>
-                    <div class="streak-count"><span id="streakCount">0</span> day streak</div>
-                    <div class="streak-label">Longest: <span id="longestStreak">0</span> days</div>
-                </div>
-            </div>
-
-            <!-- Recommendation -->
-            <div class="recommendation-banner" id="recommendationBanner" style="display:none">
-                <span class="rec-icon">💡</span>
-                <span id="recommendationText"></span>
-            </div>
-
-            <!-- Stats Grid -->
+            <!-- Stats Row -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">🌍</div>
-                    <div class="stat-value"><span id="statCo2Saved">0</span><span class="unit">kg</span></div>
-                    <div class="stat-label">CO₂ Saved</div>
+                    <div class="stat-card-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        CO₂ Saved
+                    </div>
+                    <div class="stat-card-value green" id="stat-saved">0.0 kg</div>
+                    <div class="stat-card-sub">vs taking the car</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📏</div>
-                    <div class="stat-value"><span id="statDistance">0</span><span class="unit">km</span></div>
-                    <div class="stat-label">Total Distance</div>
+                    <div class="stat-card-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                        Total CO₂ Emitted
+                    </div>
+                    <div class="stat-card-value dark" id="stat-emitted">0.0 kg</div>
+                    <div class="stat-card-sub">from all journeys</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🔥</div>
-                    <div class="stat-value"><span id="statCalories">0</span><span class="unit">cal</span></div>
-                    <div class="stat-label">Calories Burned</div>
+                    <div class="stat-card-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        Total Distance
+                    </div>
+                    <div class="stat-card-value dark" id="stat-distance">0.0 km</div>
+                    <div class="stat-card-sub" id="stat-distance-sub">across 0 journeys</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🚶</div>
-                    <div class="stat-value"><span id="statJourneys">0</span></div>
-                    <div class="stat-label">Journeys Logged</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⏱️</div>
-                    <div class="stat-value"><span id="statTime">0</span><span class="unit">min</span></div>
-                    <div class="stat-label">Travel Time</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🌳</div>
-                    <div class="stat-value"><span id="statTrees">0</span></div>
-                    <div class="stat-label">Trees Equivalent</div>
+                    <div class="stat-card-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        Journeys
+                    </div>
+                    <div class="stat-card-value dark" id="stat-journeys">0</div>
+                    <div class="stat-card-sub">total logged</div>
                 </div>
             </div>
 
-            <div class="dashboard-grid">
-                <!-- LEFT: Journey Form + Interactive Tree -->
-                <div>
-                    <!-- Journey Form -->
-                    <div class="card" style="margin-bottom:24px">
-                        <div class="card-header">
-                            <span class="card-title">Log a Journey</span>
+            <!-- Bottom Grid -->
+            <div class="bottom-grid">
+
+                <!-- Add Journey Card -->
+                <div class="card">
+                    <div class="card-title">Add Journey</div>
+                    <div class="card-subtitle">Track your local trips and their carbon footprint</div>
+
+                    <!-- Origin -->
+                    <div class="input-group">
+                        <div class="input-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            From (Point A)
                         </div>
-                        <div class="journey-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>From</label>
-                                    <input type="text" id="inputOrigin" placeholder="e.g. Home">
-                                </div>
-                                <div class="form-group">
-                                    <label>To</label>
-                                    <input type="text" id="inputDestination" placeholder="e.g. Office">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Transport Mode</label>
-                                <div class="mode-selector" id="modeSelector">
-                                    <button class="mode-btn" data-mode="walk" onclick="selectMode('walk')">
-                                        <span class="mode-icon">🚶</span> Walk
-                                    </button>
-                                    <button class="mode-btn" data-mode="bike" onclick="selectMode('bike')">
-                                        <span class="mode-icon">🚴</span> Bike
-                                    </button>
-                                    <button class="mode-btn" data-mode="eScooter" onclick="selectMode('eScooter')">
-                                        <span class="mode-icon">🛴</span> E-Scooter
-                                    </button>
-                                    <button class="mode-btn" data-mode="bus" onclick="selectMode('bus')">
-                                        <span class="mode-icon">🚌</span> Bus
-                                    </button>
-                                    <button class="mode-btn" data-mode="train" onclick="selectMode('train')">
-                                        <span class="mode-icon">🚆</span> Train
-                                    </button>
-                                    <button class="mode-btn" data-mode="car" onclick="selectMode('car')">
-                                        <span class="mode-icon">🚗</span> Car
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Distance (km)</label>
-                                <input type="number" id="inputDistance" placeholder="e.g. 5" min="0.1" step="0.1">
-                            </div>
-                            <button class="btn btn-primary" onclick="submitJourney()" id="submitJourneyBtn">
-                                🌱 Log Journey
+                        <input type="text" id="originInput" class="input-field" placeholder="e.g., Home, 123 Main St"
+                            autocomplete="off">
+                    </div>
+
+                    <!-- Destination -->
+                    <div class="input-group">
+                        <div class="input-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e"
+                                stroke-width="2.5">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            To (Point B)
+                        </div>
+                        <input type="text" id="destInput" class="input-field" placeholder="e.g., Office, 456 Oxford St"
+                            autocomplete="off">
+                    </div>
+
+                    <!-- Distance -->
+                    <div class="input-group">
+                        <div class="input-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M18 6L6 18" />
+                                <path d="M6 6l12 12" />
+                            </svg>
+                            Distance (km)
+                        </div>
+                        <input type="number" id="distanceInput" class="input-field" placeholder="e.g., 5.2" min="0.1"
+                            step="0.1" autocomplete="off">
+                    </div>
+
+                    <!-- Transport Mode -->
+                    <div class="input-group">
+                        <span class="transport-label">Transport Mode</span>
+                        <div class="mode-grid">
+                            <button class="mode-btn" data-mode="walk" onclick="selectMode('walk')">
+                                <span class="mode-emoji">🚶</span><span class="mode-name">Walk</span>
+                            </button>
+                            <button class="mode-btn" data-mode="bike" onclick="selectMode('bike')">
+                                <span class="mode-emoji">🚴</span><span class="mode-name">Bike</span>
+                            </button>
+                            <button class="mode-btn" data-mode="eScooter" onclick="selectMode('eScooter')">
+                                <span class="mode-emoji">🛴</span><span class="mode-name">Scooter</span>
+                            </button>
+                            <button class="mode-btn" data-mode="bus" onclick="selectMode('bus')">
+                                <span class="mode-emoji">🚌</span><span class="mode-name">Bus</span>
+                            </button>
+                            <button class="mode-btn" data-mode="train" onclick="selectMode('train')">
+                                <span class="mode-emoji">🚆</span><span class="mode-name">Train</span>
+                            </button>
+                            <button class="mode-btn" data-mode="car" onclick="selectMode('car')">
+                                <span class="mode-emoji">🚗</span><span class="mode-name">Car</span>
                             </button>
                         </div>
-
-                        <!-- Comparison Card -->
-                        <div class="comparison-card" id="comparisonCard">
-                            <h3 style="text-align:center; margin-bottom:12px; font-family: 'DM Serif Display', serif;">
-                                Journey Impact</h3>
-                            <div class="comparison-grid">
-                                <div class="comparison-col">
-                                    <div class="value" style="color: var(--accent-green)" id="compYourCo2">0</div>
-                                    <div class="label">Your CO₂ (kg)</div>
-                                </div>
-                                <div class="comparison-vs">VS</div>
-                                <div class="comparison-col">
-                                    <div class="value" style="color: var(--accent-red)" id="compCarCo2">0</div>
-                                    <div class="label">Car CO₂ (kg)</div>
-                                </div>
-                            </div>
-                            <div class="comparison-savings" id="compSavings"></div>
-                        </div>
                     </div>
 
-                    <!-- Interactive Tree -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Your Ecosystem</span>
-                            <span id="ecosystemBadge" class="ecosystem-emoji">🌱</span>
+                    <button class="btn-add" id="addJourneyBtn" onclick="submitJourney()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add Journey
+                    </button>
+
+                    <!-- Comparison Card (hidden by default) -->
+                    <div class="comparison-card" id="comparisonCard">
+                        <div class="comparison-title">Journey Impact</div>
+                        <div class="comparison-row">
+                            <div class="comparison-item">
+                                <span class="comp-label">Your CO₂</span>
+                                <span class="comp-value" id="compYourCo2">0.00 kg</span>
+                            </div>
+                            <div class="comparison-vs">vs</div>
+                            <div class="comparison-item">
+                                <span class="comp-label">By Car</span>
+                                <span class="comp-value comp-car" id="compCarCo2">0.00 kg</span>
+                            </div>
                         </div>
-                        <div class="tree-container" id="treeContainer">
-                            <svg class="tree-svg" id="treeSvg" viewBox="0 0 300 350" width="280" height="330"
-                                onclick="clickTree()">
-                                <!-- Ground -->
-                                <ellipse cx="150" cy="330" rx="120" ry="18" fill="#1a3a22" opacity="0.5" />
-                                <!-- Trunk -->
-                                <rect x="135" y="200" width="30" height="130" rx="6" fill="#8B5E3C" />
-                                <rect x="140" y="200" width="8" height="130" rx="3" fill="#A0724D" opacity="0.4" />
-                                <!-- Roots -->
-                                <path d="M135 320 Q110 340 90 335" stroke="#8B5E3C" stroke-width="6" fill="none"
-                                    stroke-linecap="round" />
-                                <path d="M165 320 Q190 340 210 335" stroke="#8B5E3C" stroke-width="6" fill="none"
-                                    stroke-linecap="round" />
-                                <!-- Canopy layers -->
-                                <ellipse cx="150" cy="170" rx="90" ry="60" fill="#22863a" id="canopyBase" />
-                                <ellipse cx="120" cy="150" rx="60" ry="50" fill="#2ea043" />
-                                <ellipse cx="180" cy="155" rx="55" ry="45" fill="#2ea043" />
-                                <ellipse cx="150" cy="130" rx="70" ry="50" fill="#3fb950" />
-                                <ellipse cx="130" cy="115" rx="45" ry="35" fill="#56d364" />
-                                <ellipse cx="170" cy="120" rx="40" ry="30" fill="#56d364" />
-                                <ellipse cx="150" cy="100" rx="35" ry="25" fill="#7ee787" id="canopyTop" />
-                                <!-- Decorations slot -->
-                                <g id="treeDecorations"></g>
-                            </svg>
-                        </div>
-                        <div class="ecosystem-label" id="ecosystemLabel">Barren Seedbed</div>
+                        <div class="comparison-savings" id="compSavings"></div>
                     </div>
                 </div>
 
-                <!-- RIGHT: Sustainability Score + Challenges + Achievements -->
-                <div>
-                    <!-- Sustainability Score -->
-                    <div class="card" style="margin-bottom:24px; text-align:center">
-                        <div class="card-header" style="justify-content:center">
-                            <span class="card-title">Sustainability Score</span>
-                        </div>
-                        <div class="sustainability-ring">
-                            <svg viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="52" class="ring-bg" />
-                                <circle cx="60" cy="60" r="52" class="ring-fill" id="sustainabilityRing"
-                                    stroke-dasharray="326.7" stroke-dashoffset="326.7" />
-                            </svg>
-                            <div class="ring-value" id="sustainabilityScore">0</div>
-                        </div>
+                <!-- Ecosystem Panel -->
+                <div class="card tree-panel">
+                    <div class="tree-panel-header">
+                        <span style="font-size:18px;">🌍</span>
+                        <h2>Your Ecosystem</h2>
                     </div>
+                    <p class="tree-panel-sub" id="treeMessage">A barren desert. Save CO₂ to bring it to life!</p>
 
-                    <!-- Daily Challenges -->
-                    <div class="card" style="margin-bottom:24px">
-                        <div class="card-header">
-                            <span class="card-title">Daily Challenges</span>
-                            <span style="font-size:0.8rem; color: var(--text-muted)">Today</span>
+                    <!-- Scene -->
+                    <div class="eco-scene-container" onclick="clickTree()">
+                        <div class="eco-sky" id="ecoSky">
+                            <div class="sun" id="ecoSun"></div>
+                            <div class="bird bird-1">🦅</div>
+                            <div class="bird bird-2">🦅</div>
                         </div>
-                        <div id="challengesList">
-                            <div class="empty-state" style="padding:20px">
-                                <p>Sign in to see daily challenges</p>
+                        <div class="eco-ground" id="ecoGround">
+                            <div class="river" id="ecoRiver"></div>
+                            <div class="tree-base">
+                                <div class="trunk" id="trunk"></div>
+                                <div class="leaves-wrap" id="leavesWrap"></div>
                             </div>
+                            <div class="animal deer">🦌</div>
+                            <div class="animal butterfly">🦋</div>
+                            <div class="animal frog">🐸</div>
                         </div>
                     </div>
 
-                    <!-- Achievements -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Achievements</span>
-                            <span style="font-size:0.8rem; color: var(--text-muted)" id="achievementCount">0/12</span>
+                    <div class="co2-display">
+                        <div class="co2-value"><span id="co2Display">0.0</span> kg</div>
+                        <div class="co2-label">CO₂ Saved</div>
+                    </div>
+
+                    <!-- Milestone -->
+                    <div class="milestone-section">
+                        <div class="milestone-row">
+                            <span>Next milestone</span>
+                            <span id="milestoneLabel">15 kg</span>
                         </div>
-                        <div class="achievements-grid" id="achievementsGrid">
-                            <!-- Populated by JS -->
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progressFill"></div>
                         </div>
+                        <div class="milestone-to-go" id="milestoneToGo">15.0 kg to go</div>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <!-- ==================== JOURNEYS PAGE ==================== -->
+        <!-- ========== JOURNEYS PAGE ========== -->
         <div class="page-section" id="page-journeys">
-            <h1 class="page-title">My Journeys</h1>
-            <p class="page-subtitle">Your sustainable travel history</p>
-            <div id="journeysList">
-                <div class="empty-state">
-                    <div class="empty-icon">🗺️</div>
-                    <p>No journeys yet. Log your first journey from the dashboard!</p>
+            <div class="header">
+                <div class="header-title">
+                    <h1>My Journeys</h1>
+                </div>
+                <p class="header-sub">Your complete travel history</p>
+            </div>
+            <div class="card">
+                <div id="journeysList">
+                    <div class="empty-state">
+                        <div class="empty-icon">🗺️</div>
+                        <p>No journeys yet. Log your first journey from the dashboard!</p>
+                    </div>
+                </div>
+                <div id="journeysPagination" style="display:flex;gap:6px;justify-content:center;padding-top:16px;">
                 </div>
             </div>
-            <div id="journeysPagination" style="text-align:center; margin-top:20px"></div>
         </div>
 
-        <!-- ==================== LEADERBOARD PAGE ==================== -->
+        <!-- ========== LEADERBOARD PAGE ========== -->
         <div class="page-section" id="page-leaderboard">
-            <h1 class="page-title">Leaderboard</h1>
-            <p class="page-subtitle">Compete with the community</p>
-
-            <div class="leaderboard-tabs" id="leaderboardTabs">
-                <button class="leaderboard-tab active" data-type="co2" onclick="loadLeaderboard('co2')">🌍 CO₂
-                    Saved</button>
-                <button class="leaderboard-tab" data-type="distance" onclick="loadLeaderboard('distance')">📏
-                    Distance</button>
-                <button class="leaderboard-tab" data-type="xp" onclick="loadLeaderboard('xp')">⭐ XP</button>
-                <button class="leaderboard-tab" data-type="streak" onclick="loadLeaderboard('streak')">🔥
-                    Streak</button>
+            <div class="header">
+                <div class="header-title">
+                    <h1>Leaderboard</h1>
+                </div>
+                <p class="header-sub">See how you stack up against other green travellers</p>
             </div>
-
-            <div class="period-toggle">
-                <button class="btn btn-sm btn-secondary active" data-period="all" onclick="togglePeriod('all')">All
-                    Time</button>
-                <button class="btn btn-sm btn-ghost" data-period="week" onclick="togglePeriod('week')">This
-                    Week</button>
-            </div>
-
-            <div id="leaderboardContent">
-                <div class="loading">
-                    <div class="spinner"></div>
+            <div class="card leaderboard-card">
+                <div class="leaderboard-tabs">
+                    <button class="tab-btn active" data-type="co2" onclick="loadLeaderboard('co2')">CO₂ Saved</button>
+                    <button class="tab-btn" data-type="distance" onclick="loadLeaderboard('distance')">Distance</button>
+                    <button class="tab-btn" data-type="xp" onclick="loadLeaderboard('xp')">XP</button>
+                    <button class="tab-btn" data-type="streak" onclick="loadLeaderboard('streak')">Streak</button>
+                </div>
+                <div class="leaderboard-period">
+                    <button class="period-btn active" data-period="all" onclick="togglePeriod('all')">All Time</button>
+                    <button class="period-btn" data-period="week" onclick="togglePeriod('week')">This Week</button>
+                </div>
+                <div id="leaderboardContent">
+                    <div class="empty-state">
+                        <div class="empty-icon">🏆</div>
+                        <p>Loading leaderboard...</p>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src="app.js"></script>
