@@ -27,8 +27,20 @@ function getTotals() {
 // ── Geocoding (Nominatim) ──
 let debounceTimer = null;
 async function geocode(query) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-    return r.json();
+    try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`, {
+            headers: {
+                'Accept': 'application/json',
+                // OpenStreetMap requires a valid User-Agent identifying the application
+                'User-Agent': 'TreeRoute Carbon Tracker App'
+            }
+        });
+        if (!r.ok) throw new Error('Network response was not ok');
+        return r.json();
+    } catch (error) {
+        console.error("Geocoding failed:", error);
+        return [];
+    }
 }
 
 function setupAutocomplete(inputId, listId, isOrigin) {
@@ -41,10 +53,11 @@ function setupAutocomplete(inputId, listId, isOrigin) {
         debounceTimer = setTimeout(async () => {
             const results = await geocode(input.value);
             list.innerHTML = '';
-            if (results.length) {
+            if (results && results.length) {
                 list.classList.add('open');
                 results.forEach(item => {
                     const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
                     div.textContent = item.display_name;
                     div.addEventListener('click', () => {
                         const short = item.display_name.split(',').slice(0,2).join(',');
