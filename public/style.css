@@ -297,7 +297,7 @@ body {
     display: grid;
     grid-template-columns: 400px 1fr;
     gap: 18px;
-    align-items: start;
+    align-items: stretch;
 }
 
 /* ── Cards ── */
@@ -529,9 +529,9 @@ body {
 
 /* ── Ecosystem Panel ── */
 .tree-panel {
-    min-height: 520px;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .tree-panel-header {
@@ -554,7 +554,8 @@ body {
 
 .eco-scene-container {
     width: 100%;
-    height: 300px;
+    flex: 1;
+    min-height: 300px;
     border-radius: 16px;
     position: relative;
     overflow: hidden;
@@ -570,7 +571,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 230px;
+    bottom: 0;
     background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 100%);
     transition: background 1.5s ease;
     z-index: 1;
@@ -727,7 +728,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 75px;
+    height: 25%;
     background: #d6cfc4;
     transition: background 1.5s ease;
     z-index: 2;
@@ -790,11 +791,11 @@ body {
 
 .tree-base {
     position: absolute;
-    bottom: 35px;
+    bottom: 5%;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 230px;
+    width: 80%;
+    height: 90%;
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -804,7 +805,7 @@ body {
 .trunk {
     position: absolute;
     bottom: 0;
-    width: 22px;
+    width: 38px;
     height: 0;
     background: linear-gradient(90deg, #5c2d0e 0%, #8b5e3c 40%, #7c3f1a 60%, #5c2d0e 100%);
     border-radius: 6px 6px 4px 4px;

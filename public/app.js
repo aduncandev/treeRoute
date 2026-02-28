@@ -526,15 +526,15 @@ function updateEcosystem(co2Saved) {
     });
 
     // Tree trunk
-    const trunkHeights = [0, 35, 65, 100, 130, 160];
+    const trunkHeights = [0, 55, 100, 160, 210, 260];
     trunk.style.height = trunkHeights[level] + 'px';
 
     // Branches
     if (level >= 3) {
         branchLeft.style.opacity = '1';
-        branchLeft.style.width = (10 + level * 6) + 'px';
+        branchLeft.style.width = (16 + level * 10) + 'px';
         branchRight.style.opacity = '1';
-        branchRight.style.width = (8 + level * 5) + 'px';
+        branchRight.style.width = (12 + level * 8) + 'px';
     } else {
         branchLeft.style.opacity = '0';
         branchLeft.style.width = '0';
@@ -551,38 +551,38 @@ function updateEcosystem(co2Saved) {
     const canopyData = [
         [],
         [ // level 1: tiny sprout
-            { y: 0, leaves: [{ x: 0, w: 34, h: 30 }] },
-            { y: -8, leaves: [{ x: -8, w: 26, h: 22 }, { x: 10, w: 24, h: 20 }] }
+            { y: 0, leaves: [{ x: 0, w: 50, h: 44 }] },
+            { y: -12, leaves: [{ x: -12, w: 38, h: 32 }, { x: 14, w: 36, h: 30 }] }
         ],
         [ // level 2: small sapling
-            { y: 0, leaves: [{ x: 0, w: 46, h: 40 }] },
-            { y: -14, leaves: [{ x: -20, w: 36, h: 30 }, { x: 18, w: 38, h: 32 }] },
-            { y: -28, leaves: [{ x: -8, w: 30, h: 26 }, { x: 12, w: 28, h: 24 }] }
+            { y: 0, leaves: [{ x: 0, w: 68, h: 60 }] },
+            { y: -20, leaves: [{ x: -30, w: 54, h: 44 }, { x: 26, w: 56, h: 48 }] },
+            { y: -42, leaves: [{ x: -12, w: 44, h: 38 }, { x: 18, w: 42, h: 36 }] }
         ],
         [ // level 3: growing tree
-            { y: 0, leaves: [{ x: 0, w: 56, h: 48 }] },
-            { y: -14, leaves: [{ x: -30, w: 44, h: 38 }, { x: 28, w: 46, h: 40 }] },
-            { y: -28, leaves: [{ x: -44, w: 38, h: 32 }, { x: 0, w: 40, h: 34 }, { x: 42, w: 36, h: 30 }] },
-            { y: -42, leaves: [{ x: -22, w: 32, h: 28 }, { x: 20, w: 30, h: 26 }] },
-            { y: -52, leaves: [{ x: 0, w: 26, h: 22 }] }
+            { y: 0, leaves: [{ x: 0, w: 84, h: 72 }] },
+            { y: -22, leaves: [{ x: -44, w: 66, h: 56 }, { x: 42, w: 68, h: 60 }] },
+            { y: -44, leaves: [{ x: -66, w: 56, h: 48 }, { x: 0, w: 60, h: 50 }, { x: 62, w: 54, h: 44 }] },
+            { y: -64, leaves: [{ x: -32, w: 48, h: 42 }, { x: 30, w: 44, h: 38 }] },
+            { y: -80, leaves: [{ x: 0, w: 38, h: 32 }] }
         ],
         [ // level 4: lush forest
-            { y: 4, leaves: [{ x: -16, w: 52, h: 44 }, { x: 18, w: 50, h: 42 }] },
-            { y: -10, leaves: [{ x: -40, w: 48, h: 40 }, { x: 0, w: 54, h: 46 }, { x: 40, w: 46, h: 38 }] },
-            { y: -26, leaves: [{ x: -56, w: 42, h: 36 }, { x: -18, w: 44, h: 38 }, { x: 20, w: 46, h: 40 }, { x: 54, w: 40, h: 34 }] },
-            { y: -42, leaves: [{ x: -38, w: 38, h: 32 }, { x: 0, w: 42, h: 36 }, { x: 36, w: 36, h: 30 }] },
-            { y: -56, leaves: [{ x: -20, w: 34, h: 28 }, { x: 18, w: 32, h: 26 }] },
-            { y: -68, leaves: [{ x: 0, w: 28, h: 24 }] }
+            { y: 6, leaves: [{ x: -24, w: 78, h: 66 }, { x: 26, w: 74, h: 62 }] },
+            { y: -16, leaves: [{ x: -60, w: 72, h: 60 }, { x: 0, w: 80, h: 68 }, { x: 60, w: 68, h: 56 }] },
+            { y: -40, leaves: [{ x: -84, w: 62, h: 54 }, { x: -26, w: 66, h: 56 }, { x: 30, w: 68, h: 60 }, { x: 80, w: 60, h: 50 }] },
+            { y: -64, leaves: [{ x: -56, w: 56, h: 48 }, { x: 0, w: 62, h: 54 }, { x: 54, w: 54, h: 44 }] },
+            { y: -84, leaves: [{ x: -30, w: 50, h: 42 }, { x: 26, w: 48, h: 38 }] },
+            { y: -102, leaves: [{ x: 0, w: 42, h: 36 }] }
         ],
         [ // level 5: massive rainforest canopy
-            { y: 8, leaves: [{ x: -28, w: 56, h: 48 }, { x: 26, w: 54, h: 46 }] },
-            { y: -6, leaves: [{ x: -54, w: 50, h: 42 }, { x: 0, w: 58, h: 50 }, { x: 52, w: 48, h: 40 }] },
-            { y: -22, leaves: [{ x: -70, w: 46, h: 38 }, { x: -28, w: 50, h: 44 }, { x: 26, w: 52, h: 44 }, { x: 68, w: 44, h: 36 }] },
-            { y: -38, leaves: [{ x: -58, w: 42, h: 36 }, { x: -16, w: 48, h: 40 }, { x: 18, w: 46, h: 38 }, { x: 56, w: 40, h: 34 }] },
-            { y: -52, leaves: [{ x: -42, w: 38, h: 32 }, { x: 0, w: 44, h: 38 }, { x: 40, w: 36, h: 30 }] },
-            { y: -64, leaves: [{ x: -24, w: 34, h: 28 }, { x: 22, w: 32, h: 26 }] },
-            { y: -76, leaves: [{ x: -8, w: 28, h: 24 }, { x: 10, w: 26, h: 22 }] },
-            { y: -86, leaves: [{ x: 0, w: 22, h: 18 }] }
+            { y: 12, leaves: [{ x: -42, w: 84, h: 72 }, { x: 40, w: 80, h: 68 }] },
+            { y: -10, leaves: [{ x: -80, w: 74, h: 62 }, { x: 0, w: 86, h: 74 }, { x: 78, w: 72, h: 60 }] },
+            { y: -34, leaves: [{ x: -104, w: 68, h: 56 }, { x: -42, w: 74, h: 66 }, { x: 40, w: 78, h: 66 }, { x: 102, w: 66, h: 54 }] },
+            { y: -58, leaves: [{ x: -86, w: 62, h: 54 }, { x: -24, w: 72, h: 60 }, { x: 26, w: 68, h: 56 }, { x: 84, w: 60, h: 50 }] },
+            { y: -80, leaves: [{ x: -62, w: 56, h: 48 }, { x: 0, w: 66, h: 56 }, { x: 60, w: 54, h: 44 }] },
+            { y: -98, leaves: [{ x: -36, w: 50, h: 42 }, { x: 34, w: 48, h: 38 }] },
+            { y: -114, leaves: [{ x: -12, w: 42, h: 36 }, { x: 14, w: 38, h: 32 }] },
+            { y: -130, leaves: [{ x: 0, w: 34, h: 28 }] }
         ]
     ];
     if (level >= 1) {
