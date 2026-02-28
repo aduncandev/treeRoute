@@ -20,7 +20,8 @@
         <h2 class="auth-title">Welcome back</h2>
         <p class="auth-subtitle">Sign in to track your CO<sub>2</sub> savings</p>
 
-        <form id="signinForm" class="auth-form" action="../index.html" onsubmit="handleSignIn(event)">
+        <!-- Removed the action attribute to prevent default HTML form submission -->
+        <form id="signinForm" class="auth-form" onsubmit="handleSignIn(event)">
             <div class="input-group">
                 <label class="input-label" for="email">Email address</label>
                 <div class="input-wrapper">
@@ -67,16 +68,46 @@
 </div>
 
 <script>
-function handleSignIn(event) {
+async function handleSignIn(event) {
     event.preventDefault(); // Prevent page reload
     
-    // Check if email and password fields have values
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const submitBtn = document.querySelector('.btn-auth');
+
+    // Change button text to show it's loading
+    submitBtn.textContent = 'Signing in...';
+    submitBtn.disabled = true;
     
-    if (email && password) {
-        // Redirect to dashboard
-        window.location.href = '../index.html';
+    try {
+        // Pointing to the new PHP API we created
+        const response = await fetch('../api/signin.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && !data.error) {
+            // Success! Save user data to local storage so the dashboard knows who is logged in
+            localStorage.setItem('userName', data.name);
+            localStorage.setItem('userEmail', data.email);
+            if(data.id) localStorage.setItem('userId', data.id);
+            
+            // Redirect to dashboard
+            window.location.href = '../index.html';
+        } else {
+            // Backend returned an error (e.g., wrong password)
+            alert('Error: ' + (data.error || 'Invalid credentials'));
+            submitBtn.textContent = 'Sign In';
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error. Could not connect to server.');
+        submitBtn.textContent = 'Sign In';
+        submitBtn.disabled = false;
     }
 }
 </script>
