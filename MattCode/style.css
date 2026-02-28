@@ -1,0 +1,423 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #f9fafb;
+    color: #111827;
+    min-height: 100vh;
+    padding: 32px 24px;
+}
+
+.page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Header ── */
+.header { margin-bottom: 28px; }
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 6px;
+}
+.header-icon {
+    width: 48px; height: 48px;
+    background: #22c55e;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+.header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+.header p {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-left: 62px;
+}
+
+/* ── Stat Cards ── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px 22px;
+}
+.stat-card-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    color: #9ca3af;
+    font-weight: 500;
+    margin-bottom: 14px;
+}
+.stat-card-label svg { opacity: 0.6; }
+.stat-card-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.stat-card-value.green { color: #22c55e; }
+.stat-card-value.dark  { color: #111827; }
+.stat-card-sub {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+/* ── Bottom Grid ── */
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Add Journey Card ── */
+.card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 28px;
+}
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.card-subtitle {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin-bottom: 22px;
+}
+
+/* Inputs */
+.input-group { margin-bottom: 16px; }
+.input-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+.input-label svg { color: #6b7280; }
+.input-field {
+    width: 100%;
+    padding: 11px 14px;
+    background: #f3f4f6;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.input-field::placeholder { color: #9ca3af; }
+.input-field:focus { border-color: #22c55e; background: #fff; }
+
+.dropdown-wrapper { position: relative; }
+.input-field.select-field {
+    appearance: none;
+    cursor: pointer;
+}
+.dropdown-arrow {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #6b7280;
+}
+
+.transport-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.btn-add {
+    width: 100%;
+    padding: 14px;
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    transition: background 0.2s, transform 0.1s;
+}
+.btn-add:hover { background: #1e293b; }
+.btn-add:active { transform: scale(0.99); }
+
+/* ── Ecosystem Panel ── */
+.tree-panel { padding: 28px 32px; min-height: 550px; display:flex; flex-direction:column;}
+.tree-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.tree-panel-header h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.tree-panel-sub {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+}
+
+/* ── The Dynamic Scene ── */
+.eco-scene-container {
+    width: 100%;
+    height: 380px; /* Increased height so the full tree is visible */
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+/* Sky */
+.eco-sky {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 300px; /* Increased sky height to fit tree leaves */
+    background: #e2e8f0; /* Default foggy grey */
+    transition: background 1.5s ease;
+    z-index: 1;
+}
+
+/* Sun */
+.sun {
+    position: absolute;
+    top: 30px; right: 30px;
+    width: 50px; height: 50px;
+    background: #fbbf24;
+    border-radius: 50%;
+    box-shadow: 0 0 25px #fbbf24;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 1.5s ease;
+}
+
+/* Birds */
+.bird {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0;
+    transition: all 1.5s ease;
+    user-select: none;
+}
+.bird-1 { top: 40px; left: 20%; transform: translateX(-20px); }
+.bird-2 { top: 70px; left: 30%; transform: translateX(-20px); font-size: 16px;}
+
+/* Ground */
+.eco-ground {
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 80px;
+    background: #d6cfc4; /* Desert sand */
+    transition: background 1.5s ease;
+    z-index: 2;
+}
+
+/* River */
+.river {
+    position: absolute;
+    bottom: 10px; left: -10%; right: -10%;
+    height: 12px;
+    background: #60a5fa;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scaleY(0);
+    transition: all 1.5s ease;
+}
+
+/* Tree Base */
+.tree-base {
+    position: absolute;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 260px; /* Increased height to contain the full tree */
+    display: flex; justify-content: center; align-items: flex-end;
+    z-index: 3;
+}
+.trunk {
+    position: absolute;
+    bottom: 0;
+    width: 24px; /* Slightly thicker trunk */
+    height: 0px;
+    background: #7c3f1a;
+    border-radius: 4px 4px 2px 2px;
+    transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.leaves-wrap {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: bottom 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.leaf-circle {
+    border-radius: 50%;
+    background: #22c55e;
+    transition: all 1s ease;
+}
+
+/* Animals */
+.animal {
+    position: absolute;
+    opacity: 0;
+    transition: all 1.5s ease;
+    z-index: 4;
+    user-select: none;
+}
+.deer { bottom: 35px; right: 15%; font-size: 24px; transform: translateX(20px); }
+.butterfly { bottom: 65px; left: 25%; font-size: 16px; transform: translateY(10px); }
+.frog { bottom: 15px; left: 40%; font-size: 14px; transform: translateY(10px); }
+
+/* Data Displays */
+.co2-display {
+    text-align: center;
+    margin-top: auto;
+}
+.co2-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #22c55e;
+    line-height: 1;
+}
+.co2-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* Milestone */
+.milestone-section {
+    margin-top: 24px;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 18px;
+}
+.milestone-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.milestone-row span:last-child { font-weight: 700; }
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.8s ease;
+}
+.milestone-to-go {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+/* Journey Log */
+.journey-log {
+    margin-top: 20px;
+    display: none;
+}
+.journey-log.visible { display: block; }
+.journey-log h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 10px;
+}
+.journey-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    border: 1px solid #f3f4f6;
+}
+.journey-item-route { color: #374151; font-weight: 500; }
+.journey-item-meta { color: #9ca3af; }
+.journey-item-saved { color: #22c55e; font-weight: 700; }
+
+@media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 500px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .header h1 { font-size: 1.5rem; }
+}
+
+.input-wrapper { position: relative; }
+.autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+}
+.autocomplete-list.open { display: block; }
+.autocomplete-list div {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f9fafb;
+    color: #374151;
+}
+.autocomplete-list div:last-child { border-bottom: none; }
+.autocomplete-list div:hover { background: #f0fdf4; }
+
+.toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #ef4444; color: #fff;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 0.85rem; font-weight: 500;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; }
