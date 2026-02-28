@@ -1,0 +1,123 @@
+const express = require('express');
+const db = require('../db');
+const { authMiddleware } = require('../auth');
+const { ACHIEVEMENTS, LEVEL_NAMES, LEVEL_THRESHOLDS } = require('./journeys');
+
+const router = express.Router();
+
+// Daily challenge pool
+const CHALLENGE_POOL = [
+    { key: 'walk_today', desc: 'Log a walking journey today', xp: 20, check: (userId) => db.prepare("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND mode = 'walk' AND date(created_at) = date('now')").get(userId).c >= 1 },
+    { key: 'save_2kg', desc: 'Save 2kg CO2 today', xp: 30, check: (userId) => db.prepare("SELECT COALESCE(SUM(co2_saved), 0) as s FROM journeys WHERE user_id = ? AND date(created_at) = date('now')").get(userId).s >= 2 },
+    { key: 'log_3', desc: 'Log 3 journeys today', xp: 25, check: (userId) => db.prepare("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND date(created_at) = date('now')").get(userId).c >= 3 },
+    { key: 'bike_today', desc: 'Log a bike journey today', xp: 20, check: (userId) => db.prepare("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND mode = 'bike' AND date(created_at) = date('now')").get(userId).c >= 1 },
+    { key: 'burn_200cal', desc: 'Burn 200 calories today', xp: 25, check: (userId) => db.prepare("SELECT COALESCE(SUM(calories_burned), 0) as c FROM journeys WHERE user_id = ? AND date(created_at) = date('now')").get(userId).c >= 200 },
+    { key: 'distance_10', desc: 'Travel 10km sustainably today', xp: 30, check: (userId) => db.prepare("SELECT COALESCE(SUM(distance_km), 0) as d FROM journeys WHERE user_id = ? AND mode != 'car' AND date(created_at) = date('now')").get(userId).d >= 10 },
+];
+
+function getDailyChallenges(userId) {
+    const today = new Date().toISOString().split('T')[0];
+    const seed = today.split('-').join('');
+    const indices = [];
+    for (let i = 0; i < 3; i++) {
+        indices.push((parseInt(seed) + i * 7 + userId) % CHALLENGE_POOL.length);
+    }
+    const unique = [...new Set(indices)];
+    while (unique.length < 3) {
+        unique.push((unique[unique.length - 1] + 1) % CHALLENGE_POOL.length);
+    }
+
+    return unique.slice(0, 3).map(idx => {
+        const ch = CHALLENGE_POOL[idx];
+        const completed = ch.check(userId);
+        return { key: ch.key, desc: ch.desc, xp: ch.xp, completed };
+    });
+}
+
+function getEcosystemLevel(totalCo2Saved) {
+    if (totalCo2Saved >= 500) return { level: 5, name: 'Thriving Rainforest', emoji: '🌴' };
+    if (totalCo2Saved >= 200) return { level: 4, name: 'Dense Forest', emoji: '🌲' };
+    if (totalCo2Saved >= 50) return { level: 3, name: 'Growing Woodland', emoji: '🌳' };
+    if (totalCo2Saved >= 10) return { level: 2, name: 'Young Garden', emoji: '🌿' };
+    return { level: 1, name: 'Barren Seedbed', emoji: '🌱' };
+}
+
+// GET /api/stats
+router.get('/', authMiddleware, (req, res) => {
+    try {
+        const user = db.prepare('SELECT id, username, xp, level, current_streak, longest_streak, last_journey_date FROM users WHERE id = ?').get(req.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const totals = db.prepare(`
+      SELECT 
+        COUNT(*) as totalJourneys,
+        COALESCE(SUM(distance_km), 0) as totalDistance,
+        COALESCE(SUM(co2_emitted), 0) as totalCo2Emitted,
+        COALESCE(SUM(co2_saved), 0) as totalCo2Saved,
+        COALESCE(SUM(calories_burned), 0) as totalCalories,
+        COALESCE(SUM(travel_time_min), 0) as totalTravelTime,
+        COALESCE(SUM(xp_earned), 0) as totalXpEarned
+      FROM journeys WHERE user_id = ?
+    `).get(req.userId);
+
+        const achievements = db.prepare('SELECT achievement_key, unlocked_at FROM achievements WHERE user_id = ?').all(req.userId);
+        const unlockedKeys = achievements.map(a => a.achievement_key);
+        const allAchievements = Object.entries(ACHIEVEMENTS).map(([key, val]) => ({
+            key,
+            ...val,
+            unlocked: unlockedKeys.includes(key),
+            unlocked_at: achievements.find(a => a.achievement_key === key)?.unlocked_at || null
+        }));
+
+        const dailyChallenges = getDailyChallenges(req.userId);
+
+        const greenJourneys = db.prepare("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND mode IN ('walk', 'bike', 'eScooter')").get(req.userId).c;
+        const transitJourneys = db.prepare("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND mode IN ('bus', 'train')").get(req.userId).c;
+        const sustainabilityScore = totals.totalJourneys > 0
+            ? Math.min(100, Math.round(((greenJourneys * 1.0 + transitJourneys * 0.7) / totals.totalJourneys) * 100))
+            : 0;
+
+        let recommendation = null;
+        const carJourneys = db.prepare("SELECT COUNT(*) as c, COALESCE(AVG(distance_km), 0) as avgDist FROM journeys WHERE user_id = ? AND mode = 'car'").get(req.userId);
+        if (carJourneys.c > 0) {
+            const potentialSaved = +(carJourneys.avgDist * 0.21 * 2 * 4).toFixed(1);
+            recommendation = `If you cycle instead of driving twice a week, you'd save ${potentialSaved}kg CO2 per month!`;
+        }
+
+        const currentLevel = user.level;
+        const xpToNext = currentLevel < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[currentLevel] - user.xp : 0;
+
+        res.json({
+            user: {
+                username: user.username,
+                xp: user.xp,
+                level: currentLevel,
+                level_name: LEVEL_NAMES[currentLevel - 1],
+                xp_to_next: Math.max(0, xpToNext),
+                xp_current_level: currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0,
+                xp_next_level: currentLevel < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[currentLevel] : user.xp,
+                current_streak: user.current_streak,
+                longest_streak: user.longest_streak
+            },
+            totals: {
+                journeys: totals.totalJourneys,
+                distance_km: +totals.totalDistance.toFixed(1),
+                co2_emitted_kg: +totals.totalCo2Emitted.toFixed(2),
+                co2_saved_kg: +totals.totalCo2Saved.toFixed(2),
+                calories_burned: +totals.totalCalories.toFixed(0),
+                travel_time_min: +totals.totalTravelTime.toFixed(0),
+                trees_equivalent: +(totals.totalCo2Saved / 21).toFixed(1)
+            },
+            sustainability_score: sustainabilityScore,
+            ecosystem: getEcosystemLevel(totals.totalCo2Saved),
+            achievements: allAchievements,
+            daily_challenges: dailyChallenges,
+            recommendation
+        });
+    } catch (err) {
+        console.error('Stats error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+module.exports = router;
