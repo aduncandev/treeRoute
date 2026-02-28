@@ -28,7 +28,7 @@ function getTotals() {
 let debounceTimer = null;
 async function geocode(query) {
     try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`, {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=5`, {
             headers: {
                 'Accept': 'application/json',
                 // OpenStreetMap requires a valid User-Agent identifying the application
@@ -36,7 +36,7 @@ async function geocode(query) {
             }
         });
         if (!r.ok) throw new Error('Network response was not ok');
-        return r.json();
+        return await r.json();
     } catch (error) {
         console.error("Geocoding failed:", error);
         return [];
@@ -53,14 +53,18 @@ function setupAutocomplete(inputId, listId, isOrigin) {
         debounceTimer = setTimeout(async () => {
             const results = await geocode(input.value);
             list.innerHTML = '';
-            if (results && results.length) {
+            if (results && results.length > 0) {
                 list.classList.add('open');
                 results.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'autocomplete-item';
-                    div.textContent = item.display_name;
+                    
+                    // OpenStreetMap format=jsonv2 usually returns display_name or name
+                    const fullName = item.display_name || item.name || "Unknown Location";
+                    div.textContent = fullName;
+                    
                     div.addEventListener('click', () => {
-                        const short = item.display_name.split(',').slice(0,2).join(',');
+                        const short = fullName.split(',').slice(0,2).join(',');
                         input.value = short;
                         list.classList.remove('open');
                         const coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: short };
@@ -72,7 +76,13 @@ function setupAutocomplete(inputId, listId, isOrigin) {
             } else { list.classList.remove('open'); }
         }, 450);
     });
-    document.addEventListener('click', e => { if (e.target !== input) list.classList.remove('open'); });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', e => { 
+        if (e.target !== input && e.target !== list && !list.contains(e.target)) {
+            list.classList.remove('open'); 
+        }
+    });
 }
 
 setupAutocomplete('originInput', 'originList', true);
