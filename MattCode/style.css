@@ -449,18 +449,6 @@ body {
 .journey-item-meta { color: #9ca3af; }
 .journey-item-saved { color: #22c55e; font-weight: 700; }
 
-/* ── Map Section ── */
-.map-card {
-    margin-top: 20px;
-}
-#map {
-    height: 400px;
-    width: 100%;
-    border-radius: 8px;
-    z-index: 1; /* Keep under dropdowns */
-    background: #e5e7eb;
-}
-
 @media (max-width: 900px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .bottom-grid { grid-template-columns: 1fr; }
@@ -478,7 +466,7 @@ body {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    z-index: 2000; /* Increased to render above Leaflet map */
+    z-index: 100;
     max-height: 220px;
     overflow-y: auto;
     display: none;
