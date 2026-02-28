@@ -9,7 +9,7 @@ $port = '3317';
 $db   = 'Hackthon'; 
 $user = 'Hackthon';
 // Replace this with your actual password
-$pass = 'YOUR_PASSWORD_HERE'; 
+$pass = 'FuckHack123=';
 
 try {
     // WebSupport specific connection string
