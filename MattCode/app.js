@@ -1,16 +1,21 @@
 // ── Data & Constants ──
 const MODES = {
-    car:     { label: 'Car',           speedKmh: 50, calPerKm: 0,  co2PerKm: 0.192 },
-    walk:    { label: 'Walking',       speedKmh: 5,  calPerKm: 50, co2PerKm: 0 },
-    bike:    { label: 'Bicycle',       speedKmh: 15, calPerKm: 25, co2PerKm: 0 },
-    transit: { label: 'Public Transit',speedKmh: 30, calPerKm: 2,  co2PerKm: 0.04 },
-    ecar:    { label: 'Electric Car',  speedKmh: 50, calPerKm: 0,  co2PerKm: 0.05 }
+    car:     { label: 'Car',           speedKmh: 50, calPerKm: 0,  co2PerKm: 0.192, googleMode: 'DRIVING' },
+    walk:    { label: 'Walking',       speedKmh: 5,  calPerKm: 50, co2PerKm: 0,     googleMode: 'WALKING' },
+    bike:    { label: 'Bicycle',       speedKmh: 15, calPerKm: 25, co2PerKm: 0,     googleMode: 'BICYCLING' },
+    transit: { label: 'Public Transit',speedKmh: 30, calPerKm: 2,  co2PerKm: 0.04,  googleMode: 'TRANSIT' },
+    ecar:    { label: 'Electric Car',  speedKmh: 50, calPerKm: 0,  co2PerKm: 0.05,  googleMode: 'DRIVING' }
 };
 const CAR_CO2 = 0.192;
 const MILESTONES = [15, 30, 60, 100, 200];
 
 let journeys = [];
 let coordsA = null, coordsB = null;
+
+// Google Maps Variables
+let map = null;
+let directionsService = null;
+let directionsRenderer = null;
 
 // ── State ──
 function getTotals() {
@@ -24,48 +29,53 @@ function getTotals() {
     return { saved, emitted, dist, carCount };
 }
 
-// ── Geocoding (Nominatim) ──
-let debounceTimer = null;
-async function geocode(query) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-    return r.json();
+// ── Google Maps Initialization ──
+function initMap() {
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    
+    const mapOptions = {
+        zoom: 12,
+        center: { lat: 51.5074, lng: -0.1278 }, // Default to London
+        disableDefaultUI: true,
+        zoomControl: true
+    };
+    
+    const mapElement = document.getElementById('map');
+    map = new google.maps.Map(mapElement, mapOptions);
+    directionsRenderer.setMap(map);
+
+    // Swap Nominatim for Google Places Autocomplete for better UX
+    initAutocomplete('originInput', true);
+    initAutocomplete('destInput', false);
 }
 
-function setupAutocomplete(inputId, listId, isOrigin) {
+// ── Places Autocomplete ──
+function initAutocomplete(inputId, isOrigin) {
     const input = document.getElementById(inputId);
-    const list  = document.getElementById(listId);
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.bindTo('bounds', map);
+    
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) {
+            showToast("No details available for input: '" + place.name + "'");
+            return;
+        }
 
-    input.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        if (input.value.length < 3) { list.classList.remove('open'); return; }
-        debounceTimer = setTimeout(async () => {
-            const results = await geocode(input.value);
-            list.innerHTML = '';
-            if (results.length) {
-                list.classList.add('open');
-                results.forEach(item => {
-                    const div = document.createElement('div');
-                    div.textContent = item.display_name;
-                    div.addEventListener('click', () => {
-                        const short = item.display_name.split(',').slice(0,2).join(',');
-                        input.value = short;
-                        list.classList.remove('open');
-                        const coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: short };
-                        if (isOrigin) coordsA = coords;
-                        else          coordsB = coords;
-                    });
-                    list.appendChild(div);
-                });
-            } else { list.classList.remove('open'); }
-        }, 450);
+        const coords = {
+            lat: place.geometry.location.lat(),
+            lon: place.geometry.location.lng(),
+            label: place.name || place.formatted_address.split(',')[0],
+            placeId: place.place_id
+        };
+
+        if (isOrigin) coordsA = coords;
+        else          coordsB = coords;
     });
-    document.addEventListener('click', e => { if (e.target !== input) list.classList.remove('open'); });
 }
 
-setupAutocomplete('originInput', 'originList', true);
-setupAutocomplete('destInput',   'destList',   false);
-
-// ── Haversine Distance ──
+// ── Fallback Haversine Distance (If Map Fails) ──
 function haversine(a, b) {
     const R = 6371, toR = Math.PI / 180;
     const dLat = (b.lat - a.lat) * toR;
@@ -82,7 +92,7 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── Add Journey ──
+// ── Add Journey & Plot Map ──
 document.getElementById('addJourneyBtn').addEventListener('click', () => {
     const originVal = document.getElementById('originInput').value.trim();
     const destVal   = document.getElementById('destInput').value.trim();
@@ -91,8 +101,40 @@ document.getElementById('addJourneyBtn').addEventListener('click', () => {
     if (!originVal || !destVal) { showToast('Please enter both a starting point and a destination.'); return; }
     if (!coordsA || !coordsB)   { showToast('Please select locations from the suggestions list.'); return; }
 
-    const distKm     = haversine(coordsA, coordsB);
-    const modeData   = MODES[mode];
+    const modeData = MODES[mode];
+
+    // Show the map container
+    document.getElementById('map').style.display = 'block';
+
+    // Route on Google Maps
+    if (directionsService && directionsRenderer) {
+        const request = {
+            origin: { placeId: coordsA.placeId } || { lat: coordsA.lat, lng: coordsA.lon },
+            destination: { placeId: coordsB.placeId } || { lat: coordsB.lat, lng: coordsB.lon },
+            travelMode: google.maps.TravelMode[modeData.googleMode]
+        };
+
+        directionsService.route(request, (result, status) => {
+            if (status == 'OK') {
+                directionsRenderer.setDirections(result);
+                // Get exact route distance from Google
+                const exactDistKm = result.routes[0].legs[0].distance.value / 1000;
+                saveAndCalculate(exactDistKm, mode, modeData);
+            } else {
+                // Fallback to Haversine if routing fails (e.g. no roads)
+                showToast("Could not calculate exact route. Using straight line distance.");
+                const distKm = haversine(coordsA, coordsB);
+                saveAndCalculate(distKm, mode, modeData);
+            }
+        });
+    } else {
+        // Fallback if API hasn't loaded
+        const distKm = haversine(coordsA, coordsB);
+        saveAndCalculate(distKm, mode, modeData);
+    }
+});
+
+function saveAndCalculate(distKm, mode, modeData) {
     const co2Emitted = distKm * modeData.co2PerKm;
     const co2Saved   = Math.max(0, distKm * CAR_CO2 - co2Emitted);
 
@@ -103,7 +145,7 @@ document.getElementById('addJourneyBtn').addEventListener('click', () => {
     coordsA = null; coordsB = null;
 
     updateUI();
-});
+}
 
 // ── Update All UI ──
 function updateUI() {
@@ -266,13 +308,13 @@ function updateJourneyLog() {
     items.innerHTML = '';
     [...journeys].reverse().slice(0, 5).forEach(j => {
         const div = document.createElement('div');
-        div.className = 'journey-item';
+        div.className = 'log-item'; // Updated to use the new CSS styling class
         div.innerHTML = `
-            <div>
-                <div class="journey-item-route">${j.from} → ${j.to}</div>
-                <div class="journey-item-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</div>
+            <div class="log-details">
+                <span class="log-route">${j.from} → ${j.to}</span>
+                <span class="log-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</span>
             </div>
-            <div class="journey-item-saved">+${j.co2Saved.toFixed(2)} kg</div>`;
+            <span class="log-saved">+${j.co2Saved.toFixed(2)} kg</span>`;
         items.appendChild(div);
     });
 }
