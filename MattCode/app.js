@@ -1,16 +1,49 @@
 // ── Data & Constants ──
 const MODES = {
-    car:     { label: 'Car',           speedKmh: 50, calPerKm: 0,  co2PerKm: 0.192 },
-    walk:    { label: 'Walking',       speedKmh: 5,  calPerKm: 50, co2PerKm: 0 },
-    bike:    { label: 'Bicycle',       speedKmh: 15, calPerKm: 25, co2PerKm: 0 },
-    transit: { label: 'Public Transit',speedKmh: 30, calPerKm: 2,  co2PerKm: 0.04 },
-    ecar:    { label: 'Electric Car',  speedKmh: 50, calPerKm: 0,  co2PerKm: 0.05 }
+    car:     { label: 'Car',            apiMode: 'car' },
+    walk:    { label: 'Walking',        apiMode: null },
+    bike:    { label: 'Bicycle',        apiMode: null },
+    bus:     { label: 'Bus',            apiMode: 'bus' },
+    train:   { label: 'Train',          apiMode: 'train' },
+    flight:  { label: 'Flight',         apiMode: 'flight' }
 };
 const CAR_CO2 = 0.192;
 const MILESTONES = [15, 30, 60, 100, 200];
 
 let journeys = [];
 let coordsA = null, coordsB = null;
+
+// ── Emissions API ──
+// Calls go via the local proxy (proxy.py) to avoid browser CORS restrictions.
+const EMISSIONS_PROXY = 'http://localhost:3001';
+
+async function getTravelEmissions({ originCountry, originLocation, destinationCountry, destinationLocation, transportMode, cabinClass, passengers }) {
+    const params = new URLSearchParams({
+        origin_country:       originCountry,
+        origin_location:      originLocation,
+        destination_country:  destinationCountry,
+        destination_location: destinationLocation,
+        transport_mode:       transportMode,
+        cabin_class:          cabinClass,
+        passengers:           passengers
+    });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    try {
+        const res = await fetch(`${EMISSIONS_PROXY}/v1/travel/emissions?${params}`, {
+            signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(`Emissions API error ${res.status}: ${JSON.stringify(data)}`);
+        return data;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+
 
 // ── State ──
 function getTotals() {
@@ -27,7 +60,7 @@ function getTotals() {
 // ── Geocoding (Nominatim) ──
 let debounceTimer = null;
 async function geocode(query) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&limit=5`);
     return r.json();
 }
 
@@ -50,7 +83,19 @@ function setupAutocomplete(inputId, listId, isOrigin) {
                         const short = item.display_name.split(',').slice(0,2).join(',');
                         input.value = short;
                         list.classList.remove('open');
-                        const coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: short };
+                        const addr = item.address || {};
+                        const countryCode = addr.country_code ? addr.country_code.toUpperCase() : 'GB';
+                        // Extract the cleanest single city/town name the API can resolve
+                        const apiLocation = addr.city || addr.town || addr.village ||
+                                            addr.municipality || addr.county ||
+                                            item.display_name.split(',')[0].trim();
+                        const coords = {
+                            lat: parseFloat(item.lat),
+                            lon: parseFloat(item.lon),
+                            label: short,
+                            countryCode,
+                            apiLocation
+                        };
                         if (isOrigin) coordsA = coords;
                         else          coordsB = coords;
                     });
@@ -82,27 +127,116 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ── Geocode first result helper ──
+async function geocodeFirst(query) {
+    const results = await geocode(query);
+    if (!results || results.length === 0) return null;
+    const item = results[0];
+    const addr = item.address || {};
+    const countryCode = addr.country_code ? addr.country_code.toUpperCase() : 'GB';
+    const apiLocation = addr.city || addr.town || addr.village ||
+                        addr.municipality || addr.county ||
+                        item.display_name.split(',')[0].trim();
+    return {
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        label: item.display_name.split(',').slice(0, 2).join(','),
+        countryCode,
+        apiLocation
+    };
+}
+
 // ── Add Journey ──
-document.getElementById('addJourneyBtn').addEventListener('click', () => {
+document.getElementById('addJourneyBtn').addEventListener('click', async () => {
     const originVal = document.getElementById('originInput').value.trim();
     const destVal   = document.getElementById('destInput').value.trim();
     const mode      = document.getElementById('transportMode').value;
 
     if (!originVal || !destVal) { showToast('Please enter both a starting point and a destination.'); return; }
-    if (!coordsA || !coordsB)   { showToast('Please select locations from the suggestions list.'); return; }
 
-    const distKm     = haversine(coordsA, coordsB);
-    const modeData   = MODES[mode];
-    const co2Emitted = distKm * modeData.co2PerKm;
-    const co2Saved   = Math.max(0, distKm * CAR_CO2 - co2Emitted);
+    const modeData = MODES[mode];
+    const btn = document.getElementById('addJourneyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Calculating…';
 
-    journeys.push({ from: coordsA.label, to: coordsB.label, mode, distanceKm: distKm, co2Emitted, co2Saved });
+    try {
+        // If the user typed without selecting from the dropdown, geocode now
+        if (!coordsA) coordsA = await geocodeFirst(originVal);
+        if (!coordsB) coordsB = await geocodeFirst(destVal);
+    } catch (e) { /* ignore, will fail below */ }
 
-    document.getElementById('originInput').value = '';
-    document.getElementById('destInput').value   = '';
-    coordsA = null; coordsB = null;
+    if (!coordsA || !coordsB) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Journey';
+        showToast('Could not find one or both locations. Please try again.');
+        return;
+    }
 
-    updateUI();
+    try {
+        let co2Emitted = 0;
+        let distKm = haversine(coordsA, coordsB);
+        let carCo2 = distKm * CAR_CO2; // haversine fallback
+
+        const apiParams = {
+            originCountry:       coordsA.countryCode,
+            originLocation:      coordsA.apiLocation,
+            destinationCountry:  coordsB.countryCode,
+            destinationLocation: coordsB.apiLocation,
+            cabinClass:          'economy',
+            passengers:          1
+        };
+
+        if (modeData.apiMode && modeData.apiMode !== 'car') {
+            // Fetch journey + car baseline in parallel
+            const [journeyData, carData] = await Promise.allSettled([
+                getTravelEmissions({ ...apiParams, transportMode: modeData.apiMode }),
+                getTravelEmissions({ ...apiParams, transportMode: 'car' })
+            ]);
+
+            if (journeyData.status === 'fulfilled') {
+                co2Emitted = journeyData.value.data.attributes.emissions.co2e;
+                distKm     = journeyData.value.data.attributes.route.total_distance_km;
+            } else {
+                throw new Error(journeyData.reason);
+            }
+
+            if (carData.status === 'fulfilled') {
+                carCo2 = carData.value.data.attributes.emissions.co2e;
+            } else {
+                console.warn('Car baseline failed, using haversine estimate');
+                carCo2 = distKm * CAR_CO2;
+            }
+
+        } else if (modeData.apiMode === 'car') {
+            const data = await getTravelEmissions({ ...apiParams, transportMode: 'car' });
+            co2Emitted = data.data.attributes.emissions.co2e;
+            distKm     = data.data.attributes.route.total_distance_km;
+            carCo2     = co2Emitted; // same mode, no savings
+        }
+        // walk / bike: co2Emitted stays 0, carCo2 stays haversine estimate
+
+        const co2Saved = Math.max(0, carCo2 - co2Emitted);
+
+        journeys.push({
+            from: coordsA.label, to: coordsB.label,
+            mode, distanceKm: distKm,
+            co2Emitted, co2Saved
+        });
+
+        document.getElementById('originInput').value = '';
+        document.getElementById('destInput').value   = '';
+        coordsA = null; coordsB = null;
+
+        updateUI();
+        showToast('Journey added!');
+
+    } catch (err) {
+        console.error('Add journey error:', err);
+        showToast('Could not fetch emissions — is the proxy running? (python3 proxy.py)');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Journey`;
+    }
 });
 
 // ── Update All UI ──
