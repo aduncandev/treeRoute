@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>treeRoute | CO2 Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            border-radius: 12px;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .text-eco {
+            color: #2e7d32;
+        }
+
+        .bg-eco {
+            background-color: #2e7d32;
+        }
+
+        .tree-graphic {
+            font-size: 6rem;
+            line-height: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .tree-graphic:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container-fluid max-w-1200 mx-auto" style="max-width: 1200px;">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold"><span class="text-eco">🍃 treeRoute</span> Journey Tracker</h2>
+                <p class="text-muted">Track your local journeys and see how much CO₂ you save by not taking the car</p>
+            </div>
+            <button id="resetBtn" class="btn btn-outline-danger btn-sm">Reset Demo</button>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 h-100 border-success">
+                    <small class="text-muted">🍃 CO₂ Saved</small>
+                    <h2 class="fw-bold text-eco mt-2"><span id="metricSaved">0.0</span> kg</h2>
+                    <small class="text-muted">vs taking the car</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 h-100">
+                    <small class="text-muted">📉 Total CO₂ Emitted</small>
+                    <h2 class="fw-bold mt-2"><span id="metricEmitted">0.0</span> kg</h2>
+                    <small class="text-muted">from all journeys</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 h-100">
+                    <small class="text-muted">📍 Total Distance</small>
+                    <h2 class="fw-bold mt-2"><span id="metricDistance">0.0</span> km</h2>
+                    <small class="text-muted">across <span id="metricJourneys">0</span> journeys</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 h-100">
+                    <small class="text-muted">🚗 Car Usage</small>
+                    <h2 class="fw-bold mt-2"><span id="metricCarUsage">0</span>%</h2>
+                    <small class="text-muted">of journeys by car</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card p-4 h-100">
+                    <h5 class="fw-bold">Add Journey</h5>
+                    <p class="text-muted small">Track your local trips and their carbon footprint</p>
+
+                    <form id="journeyForm">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">📍 From (Point A)</label>
+                            <input type="text" id="pointA" class="form-control bg-light" placeholder="e.g., Home"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">📍 To (Point B)</label>
+                            <input type="text" id="pointB" class="form-control bg-light" placeholder="e.g., Office"
+                                required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">Transport Mode</label>
+                            <select id="mode" class="form-select bg-light">
+                                <option value="Walking">Walking</option>
+                                <option value="Cycling">Cycling</option>
+                                <option value="Bus">Bus</option>
+                                <option value="Train">Train</option>
+                                <option value="Car">Car</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100">+ Add Journey</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card p-4 h-100 text-center d-flex flex-column justify-content-between"
+                    style="background-color: #fcfdfc;">
+                    <div class="text-start">
+                        <h5 class="fw-bold">🍃 Your Carbon Tree</h5>
+                        <p class="text-muted small" id="treeMessage">Awaiting your first eco-friendly journey...</p>
+                    </div>
+
+                    <div class="my-4">
+                        <div id="treeVisual" class="tree-graphic">🌱</div>
+                        <h3 class="fw-bold text-eco mt-3"><span id="treeSaved">0.0</span> kg</h3>
+                        <small class="text-muted">CO₂ Saved</small>
+                    </div>
+
+                    <div class="text-start">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Next milestone</span>
+                            <span>30 kg</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="treeProgress" class="progress-bar bg-eco" role="progressbar" style="width: 0%">
+                            </div>
+                        </div>
+                        <small class="text-muted d-block text-center mt-2"><span id="treeToGo">30.0</span> kg to
+                            go</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card p-4">
+                    <h5 class="fw-bold">Emissions Comparison</h5>
+                    <p class="text-muted small">CO₂ emissions (kg) by transport mode vs taking the car</p>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="emissionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
