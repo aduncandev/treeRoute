@@ -1779,3 +1779,124 @@ body {
         white-space: nowrap;
     }
 }
+
+/* ── CO2 Impact Section ── */
+.impact-section {
+    margin-top: 28px;
+}
+
+.impact-header {
+    margin-bottom: 16px;
+}
+
+.impact-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.3px;
+}
+
+.impact-subtitle {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-top: 2px;
+}
+
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.impact-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: default;
+}
+
+.impact-card.impact-card-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-color: var(--green-100);
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    display: block;
+}
+
+.impact-card.impact-card-link:hover {
+    border-color: var(--green-500);
+    background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+}
+
+.impact-link-hint {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--green-500);
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+}
+
+.impact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.impact-emoji {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+    line-height: 1;
+}
+
+.impact-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--green-500);
+    letter-spacing: -0.5px;
+    font-family: 'Fraunces', serif;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.impact-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 3px;
+}
+
+.impact-desc {
+    font-size: 0.73rem;
+    color: var(--gray-400);
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .impact-card {
+        padding: 16px 12px;
+    }
+
+    .impact-value {
+        font-size: 1.4rem;
+    }
+
+    .impact-emoji {
+        font-size: 1.6rem;
+    }
+}

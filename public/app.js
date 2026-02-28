@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         updateNavUser();
         updateEcosystem(0);
+        updateImpacts(0);
     }
 });
 
@@ -226,6 +227,7 @@ function renderStats(data) {
     // Ecosystem
     updateEcosystem(totals.co2_saved_kg);
     updateMilestone(totals.co2_saved_kg);
+    updateImpacts(totals.co2_saved_kg);
 
     // Update nav badge
     const badge = document.querySelector('.level-badge');
@@ -254,6 +256,7 @@ function resetDashboard() {
     guestStats = { co2Saved: 0, co2Emitted: 0, distance: 0, calories: 0, journeyCount: 0, caloriesByMode: {} };
     updateEcosystem(0);
     updateMilestone(0);
+    updateImpacts(0);
 }
 
 // ===== MODE SELECTION =====
@@ -317,6 +320,7 @@ async function submitJourney() {
 
         updateEcosystem(guestStats.co2Saved);
         updateMilestone(guestStats.co2Saved);
+        updateImpacts(guestStats.co2Saved);
 
         showToast('🌱', 'Journey calculated! Sign in to save it permanently.');
         clearForm();
@@ -418,6 +422,31 @@ function updateMilestone(co2Saved) {
     const toGo = Math.max(0, next - co2Saved).toFixed(1);
     document.getElementById('milestoneToGo').textContent = `${toGo} kg to go`;
     document.getElementById('co2Display').textContent = co2Saved.toFixed(1);
+}
+
+// ===== CO2 IMPACTS =====
+function formatImpactNum(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
+    if (n >= 1000) return (n / 1000).toFixed(2) + 'k';
+    if (n < 1 && n > 0) return n.toFixed(1);
+    return Math.round(n).toString();
+}
+
+function updateImpacts(co2Saved) {
+    // 1 penguin "habit" (daily foraging trip undisrupted) per 3 kg CO2 saved
+    const penguins = co2Saved / 3;
+    // 1 tree absorbs ~21 kg CO2/year
+    const trees = co2Saved / 21;
+    // 1 smartphone charge ≈ 8.22 g CO2 = 0.00822 kg
+    const phones = co2Saved / 0.00822;
+    // 1 blimp (Goodyear-size) holds ~11,000 kg of gas
+    const blimps = co2Saved / 11000;
+
+    document.getElementById('impact-penguins').textContent = formatImpactNum(penguins);
+    document.getElementById('impact-trees').textContent   = formatImpactNum(trees);
+    document.getElementById('impact-phones').textContent  = formatImpactNum(phones);
+    document.getElementById('impact-blimps').textContent  = blimps < 0.001 ? '<0.001' : blimps.toFixed(4);
 }
 
 // ===== ECOSYSTEM VISUALIZATION =====
