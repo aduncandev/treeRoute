@@ -11,13 +11,6 @@ const MILESTONES = [15, 30, 60, 100, 200];
 
 let journeys = [];
 let coordsA = null, coordsB = null;
-let currentRouteDistance = null;
-
-// ── Map State ──
-let map = null;
-let routeLayer = null;
-let markerA = null;
-let markerB = null;
 
 // ── State ──
 function getTotals() {
@@ -60,8 +53,6 @@ function setupAutocomplete(inputId, listId, isOrigin) {
                         const coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: short };
                         if (isOrigin) coordsA = coords;
                         else          coordsB = coords;
-                        
-                        updateMap(); // Update map markers and route
                     });
                     list.appendChild(div);
                 });
@@ -71,84 +62,10 @@ function setupAutocomplete(inputId, listId, isOrigin) {
     document.addEventListener('click', e => { if (e.target !== input) list.classList.remove('open'); });
 }
 
-// ── Leaflet & Routing ──
-async function updateMap() {
-    if (!map) return;
+setupAutocomplete('originInput', 'originList', true);
+setupAutocomplete('destInput',   'destList',   false);
 
-    if (markerA) map.removeLayer(markerA);
-    if (markerB) map.removeLayer(markerB);
-    if (routeLayer) map.removeLayer(routeLayer);
-    currentRouteDistance = null;
-
-    const bounds = [];
-    if (coordsA) {
-        markerA = L.marker([coordsA.lat, coordsA.lon]).addTo(map).bindPopup("Origin").openPopup();
-        bounds.push([coordsA.lat, coordsA.lon]);
-    }
-    if (coordsB) {
-        markerB = L.marker([coordsB.lat, coordsB.lon]).addTo(map).bindPopup("Destination");
-        bounds.push([coordsB.lat, coordsB.lon]);
-    }
-
-    if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-    }
-
-    if (coordsA && coordsB) {
-        await drawRoute();
-    }
-}
-
-async function drawRoute() {
-    const mode = document.getElementById('transportMode').value;
-    let osrmProfile = 'driving'; // Default fallback
-    if (mode === 'walk') osrmProfile = 'walking';
-    if (mode === 'bike') osrmProfile = 'cycling';
-
-    const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${coordsA.lon},${coordsA.lat};${coordsB.lon},${coordsB.lat}?overview=full&geometries=geojson`;
-
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.routes && data.routes.length > 0) {
-            // Leaflet expects [lat, lon], GeoJSON provides [lon, lat]
-            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-            
-            let color = '#3b82f6'; // Blue for car/transit
-            if (mode === 'walk') color = '#22c55e'; // Green
-            if (mode === 'bike') color = '#f59e0b'; // Yellow
-            
-            routeLayer = L.polyline(coords, { color: color, weight: 5, opacity: 0.8 }).addTo(map);
-            map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
-            
-            // True street routing distance from OSRM
-            currentRouteDistance = data.routes[0].distance / 1000;
-        }
-    } catch (err) {
-        console.error("Routing error:", err);
-    }
-}
-
-// ── Initialization ──
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Map on London / UK
-    map = L.map('map').setView([51.505, -0.09], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    setupAutocomplete('originInput', 'originList', true);
-    setupAutocomplete('destInput',   'destList',   false);
-
-    document.getElementById('transportMode').addEventListener('change', () => {
-        if (coordsA && coordsB) updateMap();
-    });
-
-    updateEcosystem(0); // Initialize ecosystem
-});
-
-// ── Haversine Distance (Fallback) ──
+// ── Haversine Distance ──
 function haversine(a, b) {
     const R = 6371, toR = Math.PI / 180;
     const dLat = (b.lat - a.lat) * toR;
@@ -174,8 +91,7 @@ document.getElementById('addJourneyBtn').addEventListener('click', () => {
     if (!originVal || !destVal) { showToast('Please enter both a starting point and a destination.'); return; }
     if (!coordsA || !coordsB)   { showToast('Please select locations from the suggestions list.'); return; }
 
-    // Use actual routed street distance if available, fallback to Haversine
-    const distKm     = currentRouteDistance || haversine(coordsA, coordsB);
+    const distKm     = haversine(coordsA, coordsB);
     const modeData   = MODES[mode];
     const co2Emitted = distKm * modeData.co2PerKm;
     const co2Saved   = Math.max(0, distKm * CAR_CO2 - co2Emitted);
@@ -185,9 +101,7 @@ document.getElementById('addJourneyBtn').addEventListener('click', () => {
     document.getElementById('originInput').value = '';
     document.getElementById('destInput').value   = '';
     coordsA = null; coordsB = null;
-    currentRouteDistance = null;
-    
-    updateMap(); // Clears map paths
+
     updateUI();
 });
 
@@ -339,6 +253,9 @@ function updateEcosystem(saved) {
     leavesW.innerHTML    = leafHTML;
     msg.textContent      = message;
 }
+
+// Initialize empty desert state
+updateEcosystem(0);
 
 // ── Journey Log ──
 function updateJourneyLog() {
