@@ -32,8 +32,9 @@ body {
 /* Navbar */
 .navbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
   padding: 1rem 2rem;
   background-color: var(--card-bg);
   box-shadow: var(--shadow-sm);
@@ -90,6 +91,10 @@ body {
   font-size: 0.95rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.navbar-auth {
+  margin-left: auto;
 }
 
 .navbar-auth .btn-signin:hover {
