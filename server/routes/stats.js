@@ -56,6 +56,9 @@ router.get('/', authMiddleware, async (req, res) => {
         const transitJourneys = (await db.get("SELECT COUNT(*) as c FROM journeys WHERE user_id = ? AND mode IN ('bus', 'train')", [req.userId])).c;
         const sustainabilityScore = totals.totalJourneys > 0 ? Math.min(100, Math.round(((greenJourneys * 1.0 + transitJourneys * 0.7) / totals.totalJourneys) * 100)) : 0;
 
+        // Find top calorie-burning transport mode
+        const topCalorieMode = await db.get("SELECT mode, SUM(calories_burned) as total_cal FROM journeys WHERE user_id = ? AND calories_burned > 0 GROUP BY mode ORDER BY total_cal DESC LIMIT 1", [req.userId]);
+
         let recommendation = null;
         const carJourneys = await db.get("SELECT COUNT(*) as c, COALESCE(AVG(distance_km), 0) as avgDist FROM journeys WHERE user_id = ? AND mode = 'car'", [req.userId]);
         if (carJourneys.c > 0) {
@@ -68,7 +71,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
         res.json({
             user: { username: user.username, xp: user.xp, level: currentLevel, level_name: LEVEL_NAMES[currentLevel - 1], xp_to_next: Math.max(0, xpToNext), xp_current_level: currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0, xp_next_level: currentLevel < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[currentLevel] : user.xp, current_streak: user.current_streak, longest_streak: user.longest_streak },
-            totals: { journeys: totals.totalJourneys, distance_km: +totals.totalDistance.toFixed(1), co2_emitted_kg: +totals.totalCo2Emitted.toFixed(2), co2_saved_kg: +totals.totalCo2Saved.toFixed(2), calories_burned: +totals.totalCalories.toFixed(0), travel_time_min: +totals.totalTravelTime.toFixed(0), trees_equivalent: +(totals.totalCo2Saved / 21).toFixed(1) },
+            totals: { journeys: totals.totalJourneys, distance_km: +totals.totalDistance.toFixed(1), co2_emitted_kg: +totals.totalCo2Emitted.toFixed(2), co2_saved_kg: +totals.totalCo2Saved.toFixed(2), calories_burned: +totals.totalCalories.toFixed(0), travel_time_min: +totals.totalTravelTime.toFixed(0), trees_equivalent: +(totals.totalCo2Saved / 21).toFixed(1), top_calorie_mode: topCalorieMode ? topCalorieMode.mode : null },
             sustainability_score: sustainabilityScore, ecosystem: getEcosystemLevel(totals.totalCo2Saved), achievements: allAchievements, daily_challenges: dailyChallenges, recommendation
         });
     } catch (err) {

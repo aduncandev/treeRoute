@@ -235,7 +235,7 @@ body {
 /* ── Stat Cards ── */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 14px;
     margin-bottom: 22px;
 }
@@ -277,6 +277,10 @@ body {
 
 .stat-card-value.green {
     color: var(--green-500);
+}
+
+.stat-card-value.orange {
+    color: #f97316;
 }
 
 .stat-card-value.dark {
@@ -1486,43 +1490,6 @@ body {
     }
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .bottom-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .navbar-links {
-        display: none;
-    }
-}
-
-@media (max-width: 500px) {
-    .stats-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .header h1 {
-        font-size: 1.35rem;
-    }
-
-    .page-wrapper {
-        padding: 20px 16px 48px;
-    }
-
-    .navbar {
-        padding: 0 16px;
-    }
-
-    .mode-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
 /* ── Leaflet Map ── */
 .map-container {
     position: relative;
@@ -1714,7 +1681,7 @@ body {
     transition: all 0.2s;
 }
 
-/* ── Mobile Responsive Overrides ── */
+/* ── Responsive ── */
 @media (max-width: 900px) {
     .mobile-bottom-nav {
         display: flex;

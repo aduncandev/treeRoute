@@ -38,7 +38,7 @@ const ECO_FACTS = [
 ];
 
 // Guest stats for when not logged in
-let guestStats = { co2Saved: 0, co2Emitted: 0, distance: 0, calories: 0, journeyCount: 0 };
+let guestStats = { co2Saved: 0, co2Emitted: 0, distance: 0, calories: 0, journeyCount: 0, caloriesByMode: {} };
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -218,6 +218,11 @@ function renderStats(data) {
     document.getElementById('stat-distance-sub').textContent = `across ${totals.journeys} journeys`;
     document.getElementById('stat-journeys').textContent = totals.journeys;
 
+    // Calories
+    const cal = totals.calories_burned || 0;
+    document.getElementById('stat-calories').textContent = Math.round(cal) + ' kcal';
+    updateCaloriesSub(totals);
+
     // Ecosystem
     updateEcosystem(totals.co2_saved_kg);
     updateMilestone(totals.co2_saved_kg);
@@ -227,13 +232,26 @@ function renderStats(data) {
     if (badge) badge.textContent = `Lvl ${user.level}`;
 }
 
+function updateCaloriesSub(totals) {
+    const sub = document.getElementById('stat-calories-sub');
+    if (totals.top_calorie_mode) {
+        sub.textContent = `mostly by ${MODE_NAMES[totals.top_calorie_mode] || totals.top_calorie_mode}`;
+    } else if (totals.calories_burned > 0) {
+        sub.textContent = 'from walking, cycling & scooting';
+    } else {
+        sub.textContent = 'select a green transport mode';
+    }
+}
+
 function resetDashboard() {
     document.getElementById('stat-saved').textContent = '0.0 kg';
     document.getElementById('stat-emitted').textContent = '0.0 kg';
     document.getElementById('stat-distance').textContent = '0.0 km';
     document.getElementById('stat-distance-sub').textContent = 'across 0 journeys';
     document.getElementById('stat-journeys').textContent = '0';
-    guestStats = { co2Saved: 0, co2Emitted: 0, distance: 0, calories: 0, journeyCount: 0 };
+    document.getElementById('stat-calories').textContent = '0 kcal';
+    document.getElementById('stat-calories-sub').textContent = 'select a green transport mode';
+    guestStats = { co2Saved: 0, co2Emitted: 0, distance: 0, calories: 0, journeyCount: 0, caloriesByMode: {} };
     updateEcosystem(0);
     updateMilestone(0);
 }
@@ -273,12 +291,21 @@ async function submitJourney() {
         guestStats.distance += distance;
         guestStats.calories += calories;
         guestStats.journeyCount++;
+        if (!guestStats.caloriesByMode) guestStats.caloriesByMode = {};
+        guestStats.caloriesByMode[selectedMode] = (guestStats.caloriesByMode[selectedMode] || 0) + calories;
 
         document.getElementById('stat-saved').textContent = guestStats.co2Saved.toFixed(1) + ' kg';
         document.getElementById('stat-emitted').textContent = guestStats.co2Emitted.toFixed(1) + ' kg';
         document.getElementById('stat-distance').textContent = guestStats.distance.toFixed(1) + ' km';
         document.getElementById('stat-distance-sub').textContent = `across ${guestStats.journeyCount} journeys`;
         document.getElementById('stat-journeys').textContent = guestStats.journeyCount;
+
+        // Update calories stat card
+        document.getElementById('stat-calories').textContent = Math.round(guestStats.calories) + ' kcal';
+        const topMode = Object.entries(guestStats.caloriesByMode).sort((a, b) => b[1] - a[1])[0];
+        if (topMode && topMode[1] > 0) {
+            document.getElementById('stat-calories-sub').textContent = `mostly by ${MODE_NAMES[topMode[0]] || topMode[0]}`;
+        }
 
         showComparison({
             co2_emitted,
