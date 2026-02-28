@@ -27,20 +27,8 @@ function getTotals() {
 // ── Geocoding (Nominatim) ──
 let debounceTimer = null;
 async function geocode(query) {
-    try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=5`, {
-            headers: {
-                'Accept': 'application/json',
-                // OpenStreetMap requires a valid User-Agent identifying the application
-                'User-Agent': 'TreeRoute Carbon Tracker App'
-            }
-        });
-        if (!r.ok) throw new Error('Network response was not ok');
-        return await r.json();
-    } catch (error) {
-        console.error("Geocoding failed:", error);
-        return [];
-    }
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+    return r.json();
 }
 
 function setupAutocomplete(inputId, listId, isOrigin) {
@@ -53,18 +41,13 @@ function setupAutocomplete(inputId, listId, isOrigin) {
         debounceTimer = setTimeout(async () => {
             const results = await geocode(input.value);
             list.innerHTML = '';
-            if (results && results.length > 0) {
+            if (results.length) {
                 list.classList.add('open');
                 results.forEach(item => {
                     const div = document.createElement('div');
-                    div.className = 'autocomplete-item';
-                    
-                    // OpenStreetMap format=jsonv2 usually returns display_name or name
-                    const fullName = item.display_name || item.name || "Unknown Location";
-                    div.textContent = fullName;
-                    
+                    div.textContent = item.display_name;
                     div.addEventListener('click', () => {
-                        const short = fullName.split(',').slice(0,2).join(',');
+                        const short = item.display_name.split(',').slice(0,2).join(',');
                         input.value = short;
                         list.classList.remove('open');
                         const coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: short };
@@ -76,13 +59,7 @@ function setupAutocomplete(inputId, listId, isOrigin) {
             } else { list.classList.remove('open'); }
         }, 450);
     });
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', e => { 
-        if (e.target !== input && e.target !== list && !list.contains(e.target)) {
-            list.classList.remove('open'); 
-        }
-    });
+    document.addEventListener('click', e => { if (e.target !== input) list.classList.remove('open'); });
 }
 
 setupAutocomplete('originInput', 'originList', true);
@@ -167,7 +144,7 @@ function updateEcosystem(saved) {
     const sun = document.getElementById('ecoSun');
     const river = document.getElementById('ecoRiver');
     const msg = document.getElementById('treeMessage');
-
+    
     // Animals
     const birds = document.querySelectorAll('.bird');
     const deer = document.querySelector('.deer');
@@ -188,7 +165,7 @@ function updateEcosystem(saved) {
         ground.style.background = '#d6cfc4'; // Desert sand
         sun.style.opacity = '0'; sun.style.transform = 'translateY(20px)';
         river.style.opacity = '0'; river.style.transform = 'scaleY(0)';
-
+        
         birds.forEach(b => { b.style.opacity = '0'; b.style.transform = 'translateX(-20px)'; });
         deer.style.opacity = '0'; deer.style.transform = 'translateX(20px)';
         butterfly.style.opacity = '0'; butterfly.style.transform = 'translateY(10px)';
@@ -212,14 +189,14 @@ function updateEcosystem(saved) {
     } else if (saved <= 40) {
         // Level 2: Grass & Small Animals
         const p = (saved - 15) / 25;
-        sky.style.background = '#bae6fd';
+        sky.style.background = '#bae6fd'; 
         sun.style.opacity = '1'; sun.style.transform = 'translateY(0)';
-
+        
         // Ground turns green
         const r = 214 - (p * (214 - 134)); // d6 -> 86
         const g = 207 + (p * (239 - 207)); // cf -> ef
         const b = 196 - (p * (196 - 172)); // c4 -> ac
-        ground.style.background = `rgb(${r}, ${g}, ${b})`;
+        ground.style.background = `rgb(${r}, ${g}, ${b})`; 
 
         birds.forEach(b => { b.style.opacity = p.toString(); b.style.transform = `translateX(${p * 20}px)`; });
         butterfly.style.opacity = p.toString(); butterfly.style.transform = `translateY(-${p * 10}px)`;
@@ -235,7 +212,7 @@ function updateEcosystem(saved) {
         // Level 3: River & Frogs
         const p = (saved - 40) / 60;
         ground.style.background = '#86efac';
-
+        
         river.style.opacity = p.toString();
         river.style.transform = `scaleY(${p})`;
         frog.style.opacity = p.toString();
@@ -258,7 +235,7 @@ function updateEcosystem(saved) {
         ground.style.background = '#86efac';
         river.style.opacity = '1'; river.style.transform = 'scaleY(1)';
         frog.style.opacity = '1';
-
+        
         deer.style.opacity = p.toString();
         deer.style.transform = `translateX(-${p * 15}px)`;
 
@@ -289,13 +266,13 @@ function updateJourneyLog() {
     items.innerHTML = '';
     [...journeys].reverse().slice(0, 5).forEach(j => {
         const div = document.createElement('div');
-        div.className = 'log-item';
+        div.className = 'journey-item';
         div.innerHTML = `
-            <div class="log-details">
-                <span class="log-route">${j.from} → ${j.to}</span>
-                <span class="log-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</span>
+            <div>
+                <div class="journey-item-route">${j.from} → ${j.to}</div>
+                <div class="journey-item-meta">${MODES[j.mode].label} · ${j.distanceKm.toFixed(1)} km</div>
             </div>
-            <span class="log-saved">+${j.co2Saved.toFixed(2)} kg</span>`;
+            <div class="journey-item-saved">+${j.co2Saved.toFixed(2)} kg</div>`;
         items.appendChild(div);
     });
 }
