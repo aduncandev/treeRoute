@@ -142,6 +142,7 @@ async function handleAuth(e) {
         currentUser = data.user;
         hideAuthModal();
         updateNavUser();
+        hideComparison();
         loadDashboard();
         showToast('🌳', `Welcome${authMode === 'register' ? '' : ' back'}, ${currentUser.username}!`);
     } catch (err) {
@@ -304,6 +305,16 @@ function updateCaloriesSub(totals) {
     }
 }
 
+function hideComparison() {
+    const section = document.getElementById('comparisonSection');
+    if (section) {
+        section.classList.remove('open');
+        section.style.display = 'none';
+        const body = document.getElementById('comparisonBody');
+        if (body) body.style.maxHeight = '0';
+    }
+}
+
 function resetDashboard() {
     document.getElementById('stat-saved').textContent = '0.0 kg';
     document.getElementById('stat-emitted').textContent = '0.0 kg';
@@ -316,6 +327,7 @@ function resetDashboard() {
     updateEcosystem(0);
     updateMilestone(0);
     updateImpacts(0);
+    hideComparison();
     const quickInfo = document.getElementById('dashQuickInfo');
     if (quickInfo) quickInfo.style.display = 'none';
     const recCard = document.getElementById('dashRecommendationCard');

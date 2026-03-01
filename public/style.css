@@ -609,7 +609,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 230px;
+    bottom: 0;
     background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 100%);
     transition: background 1.5s ease;
     z-index: 1;
@@ -1911,7 +1911,7 @@ body {
     }
 
     .eco-scene-container {
-        height: 240px;
+        height: 340px;
     }
 
     /* Remove tree panel min-height on small screens */
@@ -2311,6 +2311,7 @@ body {
 
 /* ── Recommendation Card ── */
 .recommendation-card {
+    margin-top: 22px;
     margin-bottom: 18px;
     background: #fefce8;
     border-color: #fef08a;
