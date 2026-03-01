@@ -48,7 +48,11 @@ async function loadProfileData() {
         // Total impact
         if (statsData && statsData.totals) {
             const saved = statsData.totals.co2_saved_kg || 0;
-            document.getElementById('profileTotalImpact').textContent = fmtNum(saved) + 'kg';
+            const impactEl = document.getElementById('profileTotalImpact');
+            impactEl.textContent = fmtNum(saved) + 'kg';
+            impactEl.className = 'stat-card-value ' + (saved < 0 ? 'red' : 'green');
+            const impactSub = impactEl.nextElementSibling;
+            if (impactSub) impactSub.textContent = saved < 0 ? 'try greener transport to recover' : 'CO2 Saved Overall';
 
             // Stats list
             document.getElementById('pStatTrees').textContent = fmtNum(saved / 21);

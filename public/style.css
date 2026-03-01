@@ -276,6 +276,10 @@ body {
     color: #f97316;
 }
 
+.stat-card-value.red {
+    color: #ef4444;
+}
+
 .stat-card-value.dark {
     color: var(--gray-900);
 }
@@ -1245,6 +1249,10 @@ body {
 
 .jd-value.green {
     color: var(--green-500);
+}
+
+.jd-value.red {
+    color: #ef4444;
 }
 
 .journey-detail-chart-wrap {

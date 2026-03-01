@@ -28,7 +28,7 @@ const SPEED_FACTORS = {
   bike: 15, walk: 5, eScooter: 20
 };
 
-const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800, 1200, 1800, 2500, 3500];
+const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1600, 2400, 3500, 5000, 7000];
 const LEVEL_NAMES = ['Seedling', 'Sprout', 'Sapling', 'Young Tree', 'Growing Oak', 'Forest Guardian', 'Eco Warrior', 'Nature Champion', 'Earth Protector', 'Planet Hero'];
 
 const ACHIEVEMENTS = {
@@ -130,14 +130,17 @@ router.post('/', authMiddleware, async (req, res) => {
 
   try {
     const co2_emitted = +(dist * CO2_FACTORS[mode]).toFixed(3);
-    const co2_saved = +((dist * CO2_FACTORS.car) - co2_emitted).toFixed(3);
+    const ecosystemPenalty = ['car', 'bus', 'train'].includes(mode) ? +(co2_emitted * 0.10).toFixed(3) : 0;
+    const co2_saved = +((dist * CO2_FACTORS.car) - co2_emitted - ecosystemPenalty).toFixed(3);
     const calories_burned = +(dist * (CALORIE_FACTORS[mode] || 0)).toFixed(1);
     const travel_time_min = route_duration_min && route_duration_min > 0
       ? +parseFloat(route_duration_min).toFixed(1)
       : +((dist / SPEED_FACTORS[mode]) * 60).toFixed(1);
 
     let xp_earned = Math.round(10 + (dist * 2) + (Math.max(0, co2_saved) * 5));
-    if (['walk', 'bike'].includes(mode)) xp_earned = Math.round(xp_earned * 2);
+    // XP multipliers: reward clean transport, heavily nerf polluting modes
+    const XP_MULTIPLIERS = { walk: 2, bike: 2, eScooter: 2, train: 0.75, bus: 0.5, car: 0.25 };
+    xp_earned = Math.max(1, Math.round(xp_earned * (XP_MULTIPLIERS[mode] || 1)));
 
     const result = await db.run(
       `INSERT INTO journeys (user_id, origin, destination, mode, distance_km, co2_emitted, co2_saved, calories_burned, travel_time_min, xp_earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
