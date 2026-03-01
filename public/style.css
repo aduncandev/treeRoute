@@ -86,13 +86,6 @@ body {
     letter-spacing: -0.3px;
 }
 
-.navbar-brand .header-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
-    border-radius: 8px;
-}
-
 .navbar-logo {
     width: 36px;
     height: 36px;
@@ -402,11 +395,6 @@ body {
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
-.mode-emoji {
-    font-size: 1.2rem;
-    line-height: 1;
-}
-
 .mode-name {
     font-size: 0.72rem;
     font-weight: 600;
@@ -415,6 +403,22 @@ body {
 
 .mode-btn.active .mode-name {
     color: var(--green-700);
+}
+
+.mode-emoji-label {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.mode-time {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--gray-400);
+    min-height: 14px;
+}
+
+.mode-btn.active .mode-time {
+    color: var(--green-500);
 }
 
 /* ── Add Button ── */
@@ -450,28 +454,58 @@ body {
     cursor: not-allowed;
 }
 
-/* ── Comparison Card ── */
-.comparison-card {
-    margin-top: 18px;
-    padding: 18px;
+/* ── Comparison Section (standalone) ── */
+.comparison-section {
+    margin-top: 22px;
+    margin-bottom: 22px;
     background: var(--green-50);
     border: 1px solid var(--green-100);
-    border-radius: var(--radius-sm);
-    display: none;
-}
-
-.comparison-card.show {
-    display: block;
+    border-radius: var(--radius);
+    overflow: hidden;
     animation: fadeIn 0.3s ease;
 }
 
-.comparison-title {
+.comparison-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+}
+
+.comparison-section-header:hover {
+    background: rgba(34, 197, 94, 0.08);
+}
+
+.comparison-section-title {
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--green-700);
-    margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
+}
+
+.comparison-toggle-btn {
+    color: var(--green-700);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.comparison-section.open .comparison-toggle-btn {
+    transform: rotate(180deg);
+}
+
+.comparison-section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    padding: 0 20px;
+}
+
+.comparison-section.open .comparison-section-body {
+    padding: 0 20px 20px;
 }
 
 .comparison-row {
@@ -562,7 +596,8 @@ body {
     border: 1px solid var(--gray-200);
     cursor: pointer;
     user-select: none;
-    box-shadow: inset 0 -30px 60px rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 -30px 60px rgba(0, 0, 0, 0.08), var(--shadow-sm);
+    background: linear-gradient(180deg, #e2e8f0, #f1f5f9);
 }
 
 .eco-sky {
@@ -727,10 +762,11 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 75px;
+    height: 85px;
     background: #d6cfc4;
     transition: background 1.5s ease;
     z-index: 2;
+    border-radius: 60% 60% 0 0 / 14px 14px 0 0;
 }
 
 .river {
@@ -806,19 +842,31 @@ body {
     bottom: 0;
     width: 22px;
     height: 0;
-    background: linear-gradient(90deg, #5c2d0e 0%, #8b5e3c 40%, #7c3f1a 60%, #5c2d0e 100%);
-    border-radius: 6px 6px 4px 4px;
+    background: linear-gradient(90deg, #5c2d0e 0%, #8b5e3c 35%, #a0724a 50%, #8b5e3c 65%, #5c2d0e 100%);
+    border-radius: 8px 8px 10px 10px;
     transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2), inset -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.trunk::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -6px;
+    right: -6px;
+    height: 10px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.15), transparent 70%);
+    border-radius: 50%;
 }
 
 .branch {
     position: absolute;
-    background: linear-gradient(90deg, #7c3f1a, #8b5e3c);
-    border-radius: 3px;
+    background: linear-gradient(90deg, #7c3f1a, #a0724a, #8b5e3c);
+    border-radius: 4px 3px 3px 4px;
     transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
     opacity: 0;
     height: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .branch-left {
@@ -847,10 +895,10 @@ body {
 }
 
 .leaf-circle {
-    border-radius: 50%;
     background: var(--green-500);
     transition: all 1s ease;
     position: absolute;
+    box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.08);
 }
 
 .leaf-circle.sway {
@@ -861,15 +909,15 @@ body {
 
     0%,
     100% {
-        transform: translateX(0) rotate(0);
+        transform: translateX(0) rotate(0) scale(1);
     }
 
     25% {
-        transform: translateX(-3px) rotate(-1deg);
+        transform: translateX(-2px) rotate(-1.5deg) scale(1.01);
     }
 
     75% {
-        transform: translateX(3px) rotate(1deg);
+        transform: translateX(2px) rotate(1.5deg) scale(0.99);
     }
 }
 
@@ -1138,6 +1186,90 @@ body {
     font-weight: 700;
     color: var(--green-500);
     flex-shrink: 0;
+}
+
+.journey-chevron {
+    color: var(--gray-400);
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    margin-left: 4px;
+}
+
+.journey-chevron.open {
+    transform: rotate(180deg);
+}
+
+/* ── Journey Detail Panel ── */
+.journey-detail-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-top: none;
+    border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+    margin-bottom: 8px;
+    margin-top: -8px;
+}
+
+.journey-detail-panel.open {
+    border-top: 1px solid var(--gray-100);
+}
+
+.journey-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+}
+
+.journey-detail-stat {
+    text-align: center;
+}
+
+.jd-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+
+.jd-value {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.jd-value.green {
+    color: var(--green-500);
+}
+
+.journey-detail-chart-wrap {
+    padding: 0 16px;
+    margin-bottom: 12px;
+    height: 160px;
+}
+
+.journey-detail-modes-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0 16px 8px;
+}
+
+.journey-detail-panel .mode-comp-cards {
+    padding: 0 16px 16px;
+}
+
+@media (max-width: 500px) {
+    .journey-detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .empty-state {
@@ -1691,9 +1823,21 @@ body {
         padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     }
 
+    .page-wrapper {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    /* Hero card spans full width on mobile */
+    .stat-card-hero {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, var(--green-50) 0%, var(--card-bg) 100%);
+        border-color: var(--green-100);
+    }
+
 
     .bottom-grid {
         grid-template-columns: 1fr;
@@ -1730,6 +1874,12 @@ body {
         padding: 0 12px;
     }
 
+    /* Hide username/level text and logout on narrow screens — avatar alone suffices */
+    .nav-user-info,
+    .logout-btn {
+        display: none;
+    }
+
     .mode-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
@@ -1756,6 +1906,11 @@ body {
         height: 240px;
     }
 
+    /* Remove tree panel min-height on small screens */
+    .tree-panel {
+        min-height: auto;
+    }
+
     /* Toast at top on mobile */
     #toastContainer {
         bottom: auto;
@@ -1777,6 +1932,17 @@ body {
         padding: 12px 10px;
         font-size: 0.8rem;
         white-space: nowrap;
+    }
+}
+
+@media (max-width: 400px) {
+    .leaderboard-table thead th {
+        padding: 10px 10px;
+    }
+
+    .leaderboard-table tbody td {
+        padding: 10px 10px;
+        font-size: 0.82rem;
     }
 }
 
@@ -1817,28 +1983,6 @@ body {
     box-shadow: var(--shadow-sm);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     cursor: default;
-}
-
-.impact-card.impact-card-link {
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    border-color: var(--green-100);
-    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-    display: block;
-}
-
-.impact-card.impact-card-link:hover {
-    border-color: var(--green-500);
-    background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
-}
-
-.impact-link-hint {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--green-500);
-    margin-top: 6px;
-    letter-spacing: 0.3px;
 }
 
 .impact-card:hover {
@@ -1900,35 +2044,34 @@ body {
         font-size: 1.6rem;
     }
 }
-/* Container for the circle */
+
+/* ── Nav Avatar & Profile Link ── */
 .nav-avatar-container {
     width: 40px;
     height: 40px;
-    background: #22c55e; /* TreeRoute Green */
-    border-radius: 50%;   /* Makes it a perfect circle */
+    background: var(--green-500);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;    /* Clips square images into the circle */
+    overflow: hidden;
     color: white;
     font-weight: bold;
     font-size: 1.2rem;
     flex-shrink: 0;
 }
 
-/* If using an actual image */
 .nav-avatar-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-/* Layout for the user info next to the circle */
 .nav-profile-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    text-decoration: none; 
+    text-decoration: none;
     color: inherit;
 }
 
@@ -1936,4 +2079,474 @@ body {
     display: flex;
     flex-direction: column;
     line-height: 1.2;
+}
+
+/* ── Profile Level Card ── */
+.profile-level-card {
+    margin-bottom: 22px;
+}
+
+.level-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.level-card-badge {
+    font-size: 2.2rem;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--green-50);
+    border-radius: 14px;
+    border: 2px solid var(--green-100);
+    flex-shrink: 0;
+}
+
+.level-card-info {
+    flex: 1;
+}
+
+.level-card-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.level-card-xp {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+}
+
+.level-card-next {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    margin-top: 6px;
+}
+
+/* ── Profile Stats List ── */
+.profile-stats-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.profile-stat-row:last-child {
+    border-bottom: none;
+}
+
+.profile-stat-icon {
+    font-size: 1.1rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.profile-stat-label {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+.profile-stat-value {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+/* ── Profile Grid ── */
+.profile-grid {
+    margin-bottom: 18px;
+}
+
+/* ── Daily Challenges ── */
+.profile-challenges-card {
+    margin-bottom: 18px;
+}
+
+.challenges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.challenge-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-xs);
+    transition: background 0.15s;
+}
+
+.challenge-item.completed {
+    background: var(--green-50);
+    border-color: var(--green-100);
+}
+
+.challenge-check {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.challenge-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.challenge-desc {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+}
+
+.challenge-xp {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--green-500);
+    white-space: nowrap;
+}
+
+/* ── Achievements Grid ── */
+.profile-achievements-card {
+    margin-bottom: 18px;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.achievement-item {
+    text-align: center;
+    padding: 14px 8px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--gray-200);
+    background: var(--card-bg);
+    transition: transform 0.15s;
+}
+
+.achievement-item:hover {
+    transform: translateY(-2px);
+}
+
+.achievement-item.unlocked {
+    border-color: var(--green-100);
+    background: var(--green-50);
+}
+
+.achievement-item.locked {
+    opacity: 0.65;
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+}
+
+.achievement-item.locked .achievement-icon {
+    filter: grayscale(1);
+}
+
+.achievement-icon {
+    font-size: 1.6rem;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.achievement-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin-bottom: 2px;
+}
+
+.achievement-desc {
+    font-size: 0.65rem;
+    color: var(--gray-400);
+    line-height: 1.3;
+}
+
+.achievement-date {
+    font-size: 0.6rem;
+    color: var(--green-500);
+    margin-top: 3px;
+    font-weight: 600;
+}
+
+@media (max-width: 900px) {
+    .achievements-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Recommendation Card ── */
+.recommendation-card {
+    margin-bottom: 18px;
+    background: #fefce8;
+    border-color: #fef08a;
+}
+
+.recommendation-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.recommendation-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--gray-900);
+}
+
+.recommendation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-xs);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.rec-item-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.recommendation-item p {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.recommendation-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.recommendation-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.recommendation-content p {
+    font-size: 0.88rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+}
+
+/* ── Dashboard Activity Card (Streak + Challenges) ── */
+.dash-activity-card {
+    margin-bottom: 22px;
+}
+
+.dash-activity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.dash-streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dash-streak-flame {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.dash-streak-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-streak-count {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1.1;
+}
+
+.dash-streak-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dash-challenges-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.dash-cp-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dash-cp-count {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--green-700);
+}
+
+.dash-challenges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dash-challenge-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-xs);
+    transition: all 0.2s;
+}
+
+.dash-challenge-item.done {
+    background: var(--green-50);
+    border-color: var(--green-100);
+}
+
+.dash-ch-check {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.dash-challenge-desc {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+}
+
+.dash-challenge-item.done .dash-challenge-desc {
+    text-decoration: line-through;
+    color: var(--gray-400);
+}
+
+.dash-challenge-xp {
+    font-weight: 700;
+    color: var(--green-700);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    background: var(--green-50);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.dash-challenge-item.done .dash-challenge-xp {
+    background: var(--green-100);
+}
+
+/* ── Mode Comparison Section ── */
+#modeComparisonSection {
+    margin-top: 16px;
+}
+
+#modeCompChart {
+    max-height: 200px;
+    margin-bottom: 14px;
+}
+
+.mode-comp-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.mode-comp-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-xs);
+    padding: 10px 8px;
+    text-align: center;
+    transition: transform 0.15s;
+}
+
+.mode-comp-card:hover {
+    transform: translateY(-2px);
+}
+
+.mode-comp-card.border-green {
+    border-color: var(--green-500);
+    background: var(--green-50);
+}
+
+.mode-comp-card.border-red {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.mode-comp-icon {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.mode-comp-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin-bottom: 4px;
+}
+
+.mode-comp-stat {
+    font-size: 0.68rem;
+    color: var(--gray-500);
+    line-height: 1.4;
+}
+
+.mode-comp-stat strong {
+    color: var(--gray-900);
+}
+
+@media (max-width: 500px) {
+    .mode-comp-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

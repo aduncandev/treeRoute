@@ -59,12 +59,44 @@ router.get('/', authMiddleware, async (req, res) => {
         // Find top calorie-burning transport mode
         const topCalorieMode = await db.get("SELECT mode, SUM(calories_burned) as total_cal FROM journeys WHERE user_id = ? AND calories_burned > 0 GROUP BY mode ORDER BY total_cal DESC LIMIT 1", [req.userId]);
 
-        let recommendation = null;
+        // Generate multiple contextual recommendations
+        const recommendations = [];
         const carJourneys = await db.get("SELECT COUNT(*) as c, COALESCE(AVG(distance_km), 0) as avgDist FROM journeys WHERE user_id = ? AND mode = 'car'", [req.userId]);
         if (carJourneys.c > 0) {
             const potentialSaved = +(carJourneys.avgDist * 0.171 * 2 * 4).toFixed(1);
-            recommendation = `If you cycle instead of driving twice a week, you'd save ${potentialSaved}kg CO2 per month!`;
+            recommendations.push({ icon: '🚴', text: `Cycle instead of driving twice a week to save ~${potentialSaved}kg CO₂ per month` });
+            if (carJourneys.avgDist <= 5) {
+                recommendations.push({ icon: '🚶', text: `Your average car journey is only ${carJourneys.avgDist.toFixed(1)}km — that's walkable in about ${Math.round(carJourneys.avgDist / 5 * 60)} minutes` });
+            }
+            if (carJourneys.avgDist <= 10) {
+                recommendations.push({ icon: '🛴', text: `An e-scooter could cover your ${carJourneys.avgDist.toFixed(1)}km car trips in ~${Math.round(carJourneys.avgDist / 20 * 60)} min with almost zero emissions` });
+            }
         }
+
+        const busJourneys = await db.get("SELECT COUNT(*) as c, COALESCE(AVG(distance_km), 0) as avgDist FROM journeys WHERE user_id = ? AND mode = 'bus'", [req.userId]);
+        if (busJourneys.c > 0 && busJourneys.avgDist <= 8) {
+            recommendations.push({ icon: '🚴', text: `Your average bus trip is ${busJourneys.avgDist.toFixed(1)}km — cycling that would burn ~${Math.round(busJourneys.avgDist * 28)} calories and produce zero emissions` });
+        }
+
+        if (user.current_streak > 0 && user.current_streak < user.longest_streak) {
+            recommendations.push({ icon: '🔥', text: `You're on a ${user.current_streak}-day streak! Your record is ${user.longest_streak} days — keep going to beat it` });
+        } else if (user.current_streak === 0 && totals.totalJourneys > 0) {
+            recommendations.push({ icon: '📅', text: `Log a journey today to start a new streak! Your longest was ${user.longest_streak} days` });
+        }
+
+        if (totals.totalCo2Saved > 0 && totals.totalCo2Saved < 21) {
+            const treesNeeded = (21 - totals.totalCo2Saved).toFixed(1);
+            recommendations.push({ icon: '🌳', text: `Save ${treesNeeded}kg more CO₂ to match a whole tree's annual absorption (21kg)` });
+        }
+
+        if (sustainabilityScore < 50 && totals.totalJourneys >= 3) {
+            recommendations.push({ icon: '🌱', text: `Your sustainability score is ${sustainabilityScore}% — try replacing one car trip with walking or cycling to boost it` });
+        } else if (sustainabilityScore >= 80) {
+            recommendations.push({ icon: '🌟', text: `Amazing ${sustainabilityScore}% sustainability score! You're a green transport champion` });
+        }
+
+        // Keep backward compat: recommendation = first item text
+        const recommendation = recommendations.length > 0 ? recommendations[0].text : null;
 
         const currentLevel = user.level;
         const xpToNext = currentLevel < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[currentLevel] - user.xp : 0;
@@ -72,7 +104,7 @@ router.get('/', authMiddleware, async (req, res) => {
         res.json({
             user: { username: user.username, xp: user.xp, level: currentLevel, level_name: LEVEL_NAMES[currentLevel - 1], xp_to_next: Math.max(0, xpToNext), xp_current_level: currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0, xp_next_level: currentLevel < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[currentLevel] : user.xp, current_streak: user.current_streak, longest_streak: user.longest_streak },
             totals: { journeys: totals.totalJourneys, distance_km: +totals.totalDistance.toFixed(1), co2_emitted_kg: +totals.totalCo2Emitted.toFixed(2), co2_saved_kg: +totals.totalCo2Saved.toFixed(2), calories_burned: +totals.totalCalories.toFixed(0), travel_time_min: +totals.totalTravelTime.toFixed(0), trees_equivalent: +(totals.totalCo2Saved / 21).toFixed(1), top_calorie_mode: topCalorieMode ? topCalorieMode.mode : null },
-            sustainability_score: sustainabilityScore, ecosystem: getEcosystemLevel(totals.totalCo2Saved), achievements: allAchievements, daily_challenges: dailyChallenges, recommendation
+            sustainability_score: sustainabilityScore, ecosystem: getEcosystemLevel(totals.totalCo2Saved), achievements: allAchievements, daily_challenges: dailyChallenges, recommendation, recommendations
         });
     } catch (err) {
         console.error('Stats error:', err);

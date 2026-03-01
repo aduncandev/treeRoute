@@ -22,10 +22,10 @@ const CALORIE_FACTORS = {
   eScooter: 4
 };
 
-// Average speeds km/h for travel time estimation
+// Average urban speeds km/h for travel time estimation
 const SPEED_FACTORS = {
-  car: 35, bus: 18, train: 60,
-  bike: 16, walk: 5, eScooter: 18
+  car: 30, bus: 12, train: 45,
+  bike: 15, walk: 5, eScooter: 20
 };
 
 const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800, 1200, 1800, 2500, 3500];

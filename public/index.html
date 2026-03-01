@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -83,7 +84,7 @@
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card stat-card-hero">
                     <div class="stat-card-label">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -147,6 +148,23 @@
                 </div>
             </div>
 
+            <div class="card dash-activity-card" id="dashQuickInfo" style="display:none">
+                <div class="dash-activity-header">
+                    <div class="dash-streak-badge" id="dashStreakCard">
+                        <span class="dash-streak-flame">🔥</span>
+                        <div class="dash-streak-info">
+                            <span class="dash-streak-count" id="dashStreakCount">0</span>
+                            <span class="dash-streak-label" id="dashStreakLabel">day streak</span>
+                        </div>
+                    </div>
+                    <div class="dash-challenges-progress" id="dashChallengesProgress">
+                        <span class="dash-cp-label">Today's Goals</span>
+                        <span class="dash-cp-count" id="dashCpCount">0/3</span>
+                    </div>
+                </div>
+                <div class="dash-challenges-list" id="dashChallengesMini"></div>
+            </div>
+
             <div class="bottom-grid">
                 <div class="card">
                     <div class="card-title">Add Journey</div>
@@ -189,19 +207,19 @@
                     </div>
 
                     <div class="input-group">
-                        <div class="input-label">Distance (km)</div>
+                        <div class="input-label">Distance (km) <span id="distHint" class="input-hint"></span></div>
                         <input type="number" id="distanceInput" class="input-field" step="0.1">
                     </div>
 
                     <div class="input-group">
                         <span class="transport-label">Transport Mode</span>
                         <div class="mode-grid">
-                            <button class="mode-btn" data-mode="walk" onclick="selectMode('walk')">🚶 Walk</button>
-                            <button class="mode-btn" data-mode="bike" onclick="selectMode('bike')">🚴 Bike</button>
-                            <button class="mode-btn" data-mode="eScooter" onclick="selectMode('eScooter')">🛴 E-Scooter</button>
-                            <button class="mode-btn" data-mode="bus" onclick="selectMode('bus')">🚌 Bus</button>
-                            <button class="mode-btn" data-mode="train" onclick="selectMode('train')">🚆 Train</button>
-                            <button class="mode-btn" data-mode="car" onclick="selectMode('car')">🚗 Car</button>
+                            <button class="mode-btn" data-mode="walk" onclick="selectMode('walk')"><span class="mode-emoji-label">🚶</span><span class="mode-name">Walk</span><span class="mode-time" id="modeTime-walk"></span></button>
+                            <button class="mode-btn" data-mode="bike" onclick="selectMode('bike')"><span class="mode-emoji-label">🚴</span><span class="mode-name">Bike</span><span class="mode-time" id="modeTime-bike"></span></button>
+                            <button class="mode-btn" data-mode="eScooter" onclick="selectMode('eScooter')"><span class="mode-emoji-label">🛴</span><span class="mode-name">E-Scooter</span><span class="mode-time" id="modeTime-eScooter"></span></button>
+                            <button class="mode-btn" data-mode="bus" onclick="selectMode('bus')"><span class="mode-emoji-label">🚌</span><span class="mode-name">Bus</span><span class="mode-time" id="modeTime-bus"></span></button>
+                            <button class="mode-btn" data-mode="train" onclick="selectMode('train')"><span class="mode-emoji-label">🚆</span><span class="mode-name">Train</span><span class="mode-time" id="modeTime-train"></span></button>
+                            <button class="mode-btn" data-mode="car" onclick="selectMode('car')"><span class="mode-emoji-label">🚗</span><span class="mode-name">Car</span><span class="mode-time" id="modeTime-car"></span></button>
                         </div>
                     </div>
 
@@ -217,13 +235,113 @@
                     <div class="eco-scene-container" onclick="clickTree()">
                         <div class="eco-sky" id="ecoSky">
                             <div class="sun" id="ecoSun"></div>
+                            <div class="cloud cloud-1" id="cloud1">☁️</div>
+                            <div class="cloud cloud-2" id="cloud2">☁️</div>
+                            <div class="bird bird-1">🐦</div>
+                            <div class="bird bird-2">🐦</div>
+                            <div class="bird bird-3">🐦</div>
                         </div>
                         <div class="eco-ground" id="ecoGround">
+                            <div class="river" id="ecoRiver"></div>
+                            <div class="flower-patch" id="ecoFlowers"></div>
                             <div class="tree-base">
-                                <div class="trunk" id="trunk"></div>
+                                <div class="trunk" id="trunk">
+                                    <div class="branch branch-left" id="branchLeft"></div>
+                                    <div class="branch branch-right" id="branchRight"></div>
+                                </div>
                                 <div class="leaves-wrap" id="leavesWrap"></div>
                             </div>
+                            <div class="animal deer">🦌</div>
+                            <div class="animal rabbit">🐇</div>
+                            <div class="animal butterfly">🦋</div>
+                            <div class="animal frog">🐸</div>
+                            <div class="animal squirrel">🐿️</div>
+                            <div class="animal hedgehog">🦔</div>
                         </div>
+                        <div class="particle-layer" id="particleLayer"></div>
+                    </div>
+
+                    <div class="co2-display" id="co2Display-section">
+                        <div class="co2-value" id="co2Display">0.0</div>
+                        <div class="co2-label">kg CO₂ saved</div>
+                    </div>
+                    <div class="milestone-section">
+                        <div class="milestone-row">
+                            <span>Next milestone</span>
+                            <span id="milestoneLabel">5 kg</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progressFill"></div>
+                        </div>
+                        <div class="milestone-to-go" id="milestoneToGo">5.0 kg to go</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comparison-section" id="comparisonSection" style="display:none">
+                <div class="comparison-section-header" onclick="toggleComparison()">
+                    <span class="comparison-section-title">Journey Comparison</span>
+                    <svg class="comparison-toggle-btn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+                <div class="comparison-section-body" id="comparisonBody">
+                    <div class="comparison-row">
+                        <div class="comparison-item">
+                            <span class="comp-label">Your CO₂</span>
+                            <span class="comp-value" id="compYourCo2">0.00 kg</span>
+                        </div>
+                        <span class="comparison-vs">vs</span>
+                        <div class="comparison-item">
+                            <span class="comp-label">By Car</span>
+                            <span class="comp-value comp-car" id="compCarCo2">0.00 kg</span>
+                        </div>
+                    </div>
+                    <div class="comparison-savings" id="compSavings"></div>
+                    <div id="modeComparisonSection" style="margin-top:16px;">
+                        <canvas id="modeCompChart" height="200"></canvas>
+                        <div id="modeCompCards" class="mode-comp-cards"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card recommendation-card" id="dashRecommendationCard" style="display:none">
+                <div class="recommendation-header">
+                    <span class="recommendation-icon">💡</span>
+                    <span class="recommendation-title">Smart Insights</span>
+                </div>
+                <div id="dashRecommendationList" class="recommendation-list"></div>
+            </div>
+
+            <div class="impact-section">
+                <div class="impact-header">
+                    <div class="impact-title">Your Tangible Impact</div>
+                    <div class="impact-subtitle">See how your CO₂ savings translate into real-world equivalents</div>
+                </div>
+                <div class="impact-grid">
+                    <div class="impact-card">
+                        <span class="impact-emoji">🐧</span>
+                        <div class="impact-value" id="impact-penguins">0</div>
+                        <div class="impact-label">Penguin Habits</div>
+                        <div class="impact-desc">Daily foraging trips preserved</div>
+                    </div>
+                    <div class="impact-card">
+                        <span class="impact-emoji">🌳</span>
+                        <div class="impact-value" id="impact-trees">0</div>
+                        <div class="impact-label">Trees Equivalent</div>
+                        <div class="impact-desc">Annual CO₂ absorption matched</div>
+                    </div>
+                    <div class="impact-card">
+                        <span class="impact-emoji">📱</span>
+                        <div class="impact-value" id="impact-phones">0</div>
+                        <div class="impact-label">Phone Charges</div>
+                        <div class="impact-desc">Smartphone charges offset</div>
+                    </div>
+                    <div class="impact-card">
+                        <span class="impact-emoji">🎈</span>
+                        <div class="impact-value" id="impact-blimps">0</div>
+                        <div class="impact-label">Blimps of Gas</div>
+                        <div class="impact-desc">Goodyear-size blimps avoided</div>
                     </div>
                 </div>
             </div>
@@ -236,6 +354,7 @@
             </div>
             <div class="card">
                 <div id="journeysList"></div>
+                <div id="journeysPagination" style="display:flex;gap:6px;justify-content:center;margin-top:16px;"></div>
             </div>
         </div>
 
@@ -244,6 +363,16 @@
                 <div class="header-title"><h1>Leaderboard</h1></div>
             </div>
             <div class="card leaderboard-card">
+                <div class="leaderboard-tabs">
+                    <button class="tab-btn active" data-type="co2" onclick="loadLeaderboard('co2')">CO₂ Saved</button>
+                    <button class="tab-btn" data-type="distance" onclick="loadLeaderboard('distance')">Distance</button>
+                    <button class="tab-btn" data-type="xp" onclick="loadLeaderboard('xp')">XP</button>
+                    <button class="tab-btn" data-type="streak" onclick="loadLeaderboard('streak')">Streak</button>
+                </div>
+                <div class="leaderboard-period">
+                    <button class="period-btn active" data-period="all" onclick="togglePeriod('all')">All Time</button>
+                    <button class="period-btn" data-period="week" onclick="togglePeriod('week')">This Week</button>
+                </div>
                 <div id="leaderboardContent"></div>
             </div>
         </div>
@@ -252,12 +381,12 @@
             <header class="header">
                 <div class="header-title">
                     <div class="header-icon">👤</div>
-                    <h1>Account Settings</h1>
+                    <h1>Your Profile</h1>
                 </div>
-                <p class="header-sub">Manage your profile and environmental impact preferences.</p>
+                <p class="header-sub">Track your progress, achievements, and environmental impact.</p>
             </header>
 
-            <div class="stats-grid">
+            <div class="stats-grid" id="profileStatsGrid">
                 <div class="stat-card">
                     <div class="stat-card-label">Total Impact</div>
                     <div class="stat-card-value green" id="profileTotalImpact">0kg</div>
@@ -269,22 +398,58 @@
                     <div class="stat-card-sub">Global Leaderboard</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-label">Trees Planted</div>
-                    <div class="stat-card-value green" id="profileTrees">0</div>
-                    <div class="stat-card-sub">Virtual Ecosystem</div>
+                    <div class="stat-card-label">Sustainability Score</div>
+                    <div class="stat-card-value green" id="profileSustainability">0</div>
+                    <div class="stat-card-sub">Your eco rating</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-label">Account Age</div>
                     <div class="stat-card-value dark" id="profileAge">1d</div>
-                    <div class="stat-card-sub">Member since 2024</div>
+                    <div class="stat-card-sub">Member since <span id="profileMemberSince">—</span></div>
                 </div>
             </div>
 
-            <div class="bottom-grid">
+            <div class="card profile-level-card" id="profileLevelCard">
+                <div class="level-card-header">
+                    <div class="level-card-badge" id="profileLevelBadge">🌱</div>
+                    <div class="level-card-info">
+                        <div class="level-card-name" id="profileLevelName">Sprout — Lvl 1</div>
+                        <div class="level-card-xp" id="profileLevelXp">0 / 100 XP</div>
+                    </div>
+                </div>
+                <div class="progress-bar-bg" style="margin-top:12px;">
+                    <div class="progress-bar-fill" id="profileXpFill" style="width:0%"></div>
+                </div>
+                <div class="level-card-next" id="profileXpNext">100 XP to next level</div>
+            </div>
+
+            <div class="card profile-challenges-card" id="profileChallengesCard" style="display:none">
+                <h2 class="card-title">Daily Challenges</h2>
+                <div id="profileChallengesList" class="challenges-list"></div>
+            </div>
+
+            <div class="card profile-achievements-card" id="profileAchievementsCard" style="display:none">
+                <h2 class="card-title">Achievements</h2>
+                <div id="profileAchievementsGrid" class="achievements-grid"></div>
+            </div>
+
+            <div class="bottom-grid profile-grid">
+                <section class="card">
+                    <h2 class="card-title">Your Stats</h2>
+                    <p class="card-subtitle">Detailed activity breakdown</p>
+                    <div class="profile-stats-list" id="profileStatsList">
+                        <div class="profile-stat-row"><span class="profile-stat-icon">🔥</span><span class="profile-stat-label">Current Streak</span><span class="profile-stat-value" id="pStatStreak">0 days</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-icon">🏅</span><span class="profile-stat-label">Longest Streak</span><span class="profile-stat-value" id="pStatLongestStreak">0 days</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-icon">⏱️</span><span class="profile-stat-label">Total Travel Time</span><span class="profile-stat-value" id="pStatTravelTime">0 min</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-icon">🌳</span><span class="profile-stat-label">Trees Equivalent</span><span class="profile-stat-value" id="pStatTrees">0</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-icon">🔥</span><span class="profile-stat-label">Total Calories</span><span class="profile-stat-value" id="pStatCalories">0</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-icon">📏</span><span class="profile-stat-label">Total Distance</span><span class="profile-stat-value" id="pStatDistance">0 km</span></div>
+                    </div>
+                </section>
+
                 <section class="card">
                     <h2 class="card-title">Personal Information</h2>
                     <p class="card-subtitle">Update your display name and email address.</p>
-                    
                     <form id="profileForm" onsubmit="handleProfileUpdate(event)">
                         <div class="input-group">
                             <label class="input-label">Username</label>
@@ -296,26 +461,12 @@
                         </div>
                         <button type="submit" class="btn-add">Save Changes</button>
                     </form>
-                </section>
-
-                <section class="card">
-                    <h2 class="card-title">Preferences</h2>
-                    <p class="card-subtitle">Customize how you track your emissions.</p>
-                    
-                    <div class="input-group">
-                        <span class="transport-label">Primary Transport Mode</span>
-                        <div class="mode-grid">
-                            <button class="mode-btn active">🚲 <span class="mode-name">Cycling</span></button>
-                            <button class="mode-btn">🚌 <span class="mode-name">Bus</span></button>
-                            <button class="mode-btn">🚗 <span class="mode-name">Car</span></button>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 24px;">
+                    <div style="margin-top: 16px;">
                         <button class="btn-ghost" onclick="handleLogout()" style="width: 100%; border-color: #fca5a5; color: #dc2626; background: transparent; padding: 10px; border-radius: 8px; cursor: pointer;">Log Out</button>
                     </div>
                 </section>
             </div>
+
         </div>
 
     </div>
@@ -333,11 +484,14 @@
             </svg>
             <span>Journeys</span>
         </button>
-        <button class="bnav-btn" data-page="profile" onclick="navigateTo('profile')">
+        <button class="bnav-btn" data-page="leaderboard" onclick="navigateTo('leaderboard')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
             </svg>
-            <span>Profile</span>
+            <span>Leaderboard</span>
         </button>
     </nav>
 

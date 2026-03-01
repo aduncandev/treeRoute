@@ -20,21 +20,27 @@ const MODE_ICONS = { walk: '🚶', bike: '🚴', eScooter: '🛴', bus: '🚌', 
 const MODE_NAMES = { walk: 'Walking', bike: 'Cycling', eScooter: 'E-Scooter', bus: 'Bus', train: 'Train', car: 'Driving' };
 const CO2_FACTORS = { car: 0.171, bus: 0.097, train: 0.035, bike: 0, walk: 0, eScooter: 0.005 };
 const CALORIE_FACTORS = { car: 0, bus: 0, train: 0, bike: 28, walk: 57, eScooter: 4 };
-const SPEED_FACTORS = { car: 35, bus: 18, train: 60, bike: 16, walk: 5, eScooter: 18 };
+const SPEED_FACTORS = { car: 30, bus: 12, train: 45, bike: 15, walk: 5, eScooter: 20 };
 const OSRM_PROFILES = { car: 'car', bus: 'car', train: null, bike: 'bike', walk: 'foot', eScooter: 'bike' };
 
 const MILESTONES = [5, 15, 50, 100, 200, 500, 1000];
 
 const ECO_FACTS = [
-    "🐝 A single bee pollinates up to 5,000 flowers a day!",
-    "🌳 One tree absorbs ~21kg of CO₂ per year.",
-    "🐋 Blue whales capture 33 tonnes of CO₂ in their lifetime.",
-    "🌿 1 acre of trees produces enough oxygen for 18 people.",
-    "🦋 Monarch butterflies migrate up to 4,800 km!",
-    "🍃 Cycling instead of driving saves ~150g CO₂ per km.",
-    "🌊 Mangroves store 3-5x more carbon than terrestrial forests.",
-    "🌻 Sunflowers can absorb radioactive materials from soil.",
-    "🐜 Ants can carry 50x their body weight.",
+    "🍃 Cycling instead of driving saves ~171g CO₂ per km.",
+    "🌳 You'd need to plant 1 tree to offset just 21kg of yearly car emissions.",
+    "🚶 A 3km walk saves 0.5kg CO₂ vs driving — and burns ~170 calories.",
+    "🚌 Buses emit 43% less CO₂ per passenger km than cars.",
+    "🚆 Trains produce 80% less CO₂ than cars per km.",
+    "🛴 E-scooters emit just 5g CO₂/km — 97% less than a car.",
+    "🚗 The average car commuter emits ~1,200kg CO₂ per year.",
+    "🌍 If everyone cycled 2km/day instead of driving, we'd cut global emissions by 686M tonnes.",
+    "💪 Walking 5km burns ~285 calories — equal to a chocolate bar.",
+    "📱 One smartphone charge = 8g CO₂. One km by car = 171g. That's 21 phone charges.",
+    "🏙️ Short car trips under 3km produce 50% more emissions per km due to cold engines.",
+    "🚴 Regular cyclists take 15% fewer sick days than drivers.",
+    "🌿 Replacing one 8km car commute with cycling saves ~500kg CO₂ per year.",
+    "⏱️ In city traffic, cycling is often faster than driving for trips under 5km.",
+    "🐧 Saving just 3kg CO₂ preserves one day of penguin habitat from sea ice loss.",
 ];
 
 // Guest stats for when not logged in
@@ -51,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateEcosystem(0);
         updateImpacts(0);
     }
+    // Update mode time estimates when user types distance manually
+    document.getElementById('distanceInput').addEventListener('input', updateModeTimeEstimates);
 });
 
 // ===== API HELPER =====
@@ -164,6 +172,7 @@ async function fetchUser() {
         updateEcosystem(0);
     }
 }
+
 function updateNavUser() {
     const area = document.getElementById('nav-auth-area');
     if (currentUser) {
@@ -209,6 +218,7 @@ function navigateTo(page) {
 
     if (page === 'journeys' && token) loadJourneys();
     if (page === 'leaderboard') loadLeaderboard(leaderboardType);
+    if (page === 'profile' && token) loadProfileData();
 }
 
 // ===== DASHBOARD =====
@@ -225,21 +235,55 @@ async function loadDashboard() {
 function renderStats(data) {
     const { user, totals } = data;
 
-    document.getElementById('stat-saved').textContent = totals.co2_saved_kg.toFixed(1) + ' kg';
-    document.getElementById('stat-emitted').textContent = totals.co2_emitted_kg.toFixed(1) + ' kg';
-    document.getElementById('stat-distance').textContent = totals.distance_km.toFixed(1) + ' km';
-    document.getElementById('stat-distance-sub').textContent = `across ${totals.journeys} journeys`;
-    document.getElementById('stat-journeys').textContent = totals.journeys;
+    document.getElementById('stat-saved').textContent = fmtNum(totals.co2_saved_kg) + ' kg';
+    document.getElementById('stat-emitted').textContent = fmtNum(totals.co2_emitted_kg) + ' kg';
+    document.getElementById('stat-distance').textContent = fmtNum(totals.distance_km) + ' km';
+    document.getElementById('stat-distance-sub').textContent = `across ${fmtNum(totals.journeys, 0)} journeys`;
+    document.getElementById('stat-journeys').textContent = fmtNum(totals.journeys, 0);
 
     // Calories
     const cal = totals.calories_burned || 0;
-    document.getElementById('stat-calories').textContent = Math.round(cal) + ' kcal';
+    document.getElementById('stat-calories').textContent = fmtNum(cal, 0) + ' kcal';
     updateCaloriesSub(totals);
 
     // Ecosystem
     updateEcosystem(totals.co2_saved_kg);
     updateMilestone(totals.co2_saved_kg);
     updateImpacts(totals.co2_saved_kg);
+
+    // Quick info — streak + daily challenges
+    const quickInfo = document.getElementById('dashQuickInfo');
+    if (user && quickInfo) {
+        quickInfo.style.display = '';
+        const streak = user.current_streak || 0;
+        document.getElementById('dashStreakCount').textContent = streak;
+        document.getElementById('dashStreakLabel').textContent = streak === 1 ? 'day streak' : 'day streak';
+
+        if (data.daily_challenges && data.daily_challenges.length > 0) {
+            const done = data.daily_challenges.filter(c => c.completed).length;
+            const total = data.daily_challenges.length;
+            document.getElementById('dashCpCount').textContent = `${done}/${total}`;
+            document.getElementById('dashChallengesMini').innerHTML = data.daily_challenges.map(ch =>
+                `<div class="dash-challenge-item ${ch.completed ? 'done' : ''}">
+                    <span class="dash-ch-check">${ch.completed ? '✅' : '⬜'}</span>
+                    <span class="dash-challenge-desc">${escapeHtml(ch.desc)}</span>
+                    <span class="dash-challenge-xp">+${ch.xp} XP</span>
+                </div>`
+            ).join('');
+        }
+    }
+
+    // Recommendations / insights
+    const recCard = document.getElementById('dashRecommendationCard');
+    const recs = data.recommendations || (data.recommendation ? [{ icon: '💡', text: data.recommendation }] : []);
+    if (recs.length > 0) {
+        recCard.style.display = '';
+        document.getElementById('dashRecommendationList').innerHTML = recs.map(r =>
+            `<div class="recommendation-item"><span class="rec-item-icon">${r.icon || '💡'}</span><p>${escapeHtml(r.text)}</p></div>`
+        ).join('');
+    } else {
+        recCard.style.display = 'none';
+    }
 
     // Update nav badge
     const badge = document.querySelector('.level-badge');
@@ -269,6 +313,10 @@ function resetDashboard() {
     updateEcosystem(0);
     updateMilestone(0);
     updateImpacts(0);
+    const quickInfo = document.getElementById('dashQuickInfo');
+    if (quickInfo) quickInfo.style.display = 'none';
+    const recCard = document.getElementById('dashRecommendationCard');
+    if (recCard) recCard.style.display = 'none';
 }
 
 // ===== MODE SELECTION =====
@@ -279,6 +327,18 @@ function selectMode(mode) {
     });
     // Re-fetch route with appropriate OSRM profile
     if (originCoords && destCoords) fetchRoute();
+    updateModeTimeEstimates();
+}
+
+function updateModeTimeEstimates() {
+    const dist = routeData.distance_km || parseFloat(document.getElementById('distanceInput').value) || 0;
+    Object.keys(SPEED_FACTORS).forEach(mode => {
+        const el = document.getElementById('modeTime-' + mode);
+        if (!el) return;
+        if (dist <= 0) { el.textContent = ''; return; }
+        const mins = Math.round((dist / SPEED_FACTORS[mode]) * 60);
+        el.textContent = mins < 60 ? `~${mins}m` : `~${Math.floor(mins / 60)}h${mins % 60 > 0 ? mins % 60 + 'm' : ''}`;
+    });
 }
 
 // ===== JOURNEY SUBMISSION =====
@@ -309,14 +369,14 @@ async function submitJourney() {
         if (!guestStats.caloriesByMode) guestStats.caloriesByMode = {};
         guestStats.caloriesByMode[selectedMode] = (guestStats.caloriesByMode[selectedMode] || 0) + calories;
 
-        document.getElementById('stat-saved').textContent = guestStats.co2Saved.toFixed(1) + ' kg';
-        document.getElementById('stat-emitted').textContent = guestStats.co2Emitted.toFixed(1) + ' kg';
-        document.getElementById('stat-distance').textContent = guestStats.distance.toFixed(1) + ' km';
-        document.getElementById('stat-distance-sub').textContent = `across ${guestStats.journeyCount} journeys`;
-        document.getElementById('stat-journeys').textContent = guestStats.journeyCount;
+        document.getElementById('stat-saved').textContent = fmtNum(guestStats.co2Saved) + ' kg';
+        document.getElementById('stat-emitted').textContent = fmtNum(guestStats.co2Emitted) + ' kg';
+        document.getElementById('stat-distance').textContent = fmtNum(guestStats.distance) + ' km';
+        document.getElementById('stat-distance-sub').textContent = `across ${fmtNum(guestStats.journeyCount, 0)} journeys`;
+        document.getElementById('stat-journeys').textContent = fmtNum(guestStats.journeyCount, 0);
 
         // Update calories stat card
-        document.getElementById('stat-calories').textContent = Math.round(guestStats.calories) + ' kcal';
+        document.getElementById('stat-calories').textContent = fmtNum(guestStats.calories, 0) + ' kcal';
         const topMode = Object.entries(guestStats.caloriesByMode).sort((a, b) => b[1] - a[1])[0];
         if (topMode && topMode[1] > 0) {
             document.getElementById('stat-calories-sub').textContent = `mostly by ${MODE_NAMES[topMode[0]] || topMode[0]}`;
@@ -328,7 +388,7 @@ async function submitJourney() {
             car_co2: carCo2,
             calories_burned: calories,
             trees_equivalent: co2_saved / 21
-        });
+        }, distance, selectedMode);
 
         updateEcosystem(guestStats.co2Saved);
         updateMilestone(guestStats.co2Saved);
@@ -365,7 +425,7 @@ async function submitJourney() {
             car_co2: data.comparison.car_co2,
             calories_burned: data.journey.calories_burned,
             trees_equivalent: data.comparison.trees_equivalent
-        });
+        }, data.journey.distance_km, data.journey.mode);
 
         showToast('🌱', `+${data.gamification.xp_earned} XP earned!`);
 
@@ -391,9 +451,13 @@ async function submitJourney() {
     }
 }
 
-function showComparison(data) {
-    const card = document.getElementById('comparisonCard');
-    card.classList.add('show');
+function showComparison(data, distance, activeMode) {
+    const section = document.getElementById('comparisonSection');
+    const body = document.getElementById('comparisonBody');
+    section.style.display = '';
+    body.style.maxHeight = body.scrollHeight + 600 + 'px';
+    section.classList.add('open');
+
     document.getElementById('compYourCo2').textContent = data.co2_emitted.toFixed(2) + ' kg';
     document.getElementById('compCarCo2').textContent = data.car_co2.toFixed(2) + ' kg';
 
@@ -411,6 +475,110 @@ function showComparison(data) {
     if (data.co2_saved <= 0) {
         savings.innerHTML = `<div class="saving-badge">🚗 Driving — consider a greener mode next time!</div>`;
     }
+
+    // Render mode comparison chart + cards
+    if (distance && activeMode) {
+        const modes = {};
+        Object.keys(CO2_FACTORS).forEach(mode => {
+            modes[mode] = {
+                co2: distance * CO2_FACTORS[mode],
+                calories: distance * CALORIE_FACTORS[mode],
+                time: Math.round((distance / SPEED_FACTORS[mode]) * 60)
+            };
+        });
+        renderModeComparison(modes, activeMode);
+    }
+
+    // Auto-scroll into view
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function toggleComparison() {
+    const section = document.getElementById('comparisonSection');
+    const body = document.getElementById('comparisonBody');
+    if (section.classList.contains('open')) {
+        section.classList.remove('open');
+        body.style.maxHeight = '0';
+    } else {
+        section.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+    }
+}
+
+let modeCompChart = null;
+
+function renderModeComparison(modes, activeMode) {
+    const canvas = document.getElementById('modeCompChart');
+    const cardsEl = document.getElementById('modeCompCards');
+    if (!canvas || !cardsEl) return;
+
+    // Destroy previous chart
+    if (modeCompChart) {
+        modeCompChart.destroy();
+        modeCompChart = null;
+    }
+
+    const modeKeys = Object.keys(modes);
+    const labels = modeKeys.map(m => MODE_NAMES[m] || m);
+    const co2Data = modeKeys.map(m => +modes[m].co2.toFixed(3));
+    const bgColors = modeKeys.map(m => m === activeMode ? '#22c55e' : m === 'car' ? '#ef4444' : '#94a3b8');
+
+    // Chart.js grouped bar chart
+    if (typeof Chart !== 'undefined') {
+        const ctx = canvas.getContext('2d');
+        modeCompChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'CO₂ (kg)',
+                    data: co2Data,
+                    backgroundColor: bgColors,
+                    borderRadius: 6,
+                    maxBarThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.parsed.y.toFixed(3) + ' kg CO₂'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'CO₂ (kg)', font: { size: 11 } },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Mode comparison cards
+    cardsEl.innerHTML = modeKeys.map(m => {
+        const d = modes[m];
+        const isActive = m === activeMode;
+        const isCar = m === 'car';
+        const borderClass = isActive ? 'border-green' : isCar ? 'border-red' : '';
+        return `
+            <div class="mode-comp-card ${borderClass}">
+                <div class="mode-comp-icon">${MODE_ICONS[m]}</div>
+                <div class="mode-comp-name">${MODE_NAMES[m]}</div>
+                <div class="mode-comp-stat"><strong>${fmtNum(d.co2, 3)}</strong> kg CO₂</div>
+                <div class="mode-comp-stat">${fmtNum(d.time, 0)} min</div>
+                <div class="mode-comp-stat">${fmtNum(d.calories, 0)} cal</div>
+            </div>
+        `;
+    }).join('');
 }
 
 function clearForm() {
@@ -436,13 +604,22 @@ function updateMilestone(co2Saved) {
     document.getElementById('co2Display').textContent = co2Saved.toFixed(1);
 }
 
-// ===== CO2 IMPACTS =====
+// ===== NUMBER FORMATTING =====
 function formatImpactNum(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
     if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
     if (n >= 1000) return (n / 1000).toFixed(2) + 'k';
     if (n < 1 && n > 0) return n.toFixed(1);
     return Math.round(n).toString();
+}
+
+function fmtNum(n, decimals = 1) {
+    if (n == null || isNaN(n)) return '0';
+    if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 10000) return (n / 1000).toFixed(1) + 'k';
+    if (Math.abs(n) >= 1000) return (n / 1000).toFixed(2) + 'k';
+    if (decimals === 0) return Math.round(n).toString();
+    return n.toFixed(decimals);
 }
 
 function updateImpacts(co2Saved) {
@@ -623,7 +800,13 @@ function updateEcosystem(co2Saved) {
                 leaf.style.top = (row.y - minY + 5 - l.h / 2) + 'px';
                 const c1 = leafGreens[leafIdx % leafGreens.length];
                 const c2 = leafGreens[(leafIdx + 3) % leafGreens.length];
-                leaf.style.background = `radial-gradient(ellipse at 38% 38%, ${c1}, ${c2})`;
+                leaf.style.background = `radial-gradient(ellipse at 35% 30%, ${c1}, ${c2})`;
+                // Organic varied border-radius for natural look
+                const r1 = 40 + (leafIdx * 7 % 20);
+                const r2 = 50 + (leafIdx * 11 % 15);
+                const r3 = 45 + (leafIdx * 13 % 18);
+                const r4 = 38 + (leafIdx * 9 % 22);
+                leaf.style.borderRadius = `${r1}% ${r2}% ${r3}% ${r4}%`;
                 leaf.style.animationDelay = (leafIdx * 0.25) + 's';
                 leavesWrap.appendChild(leaf);
                 leafIdx++;
@@ -710,22 +893,80 @@ async function loadJourneys(page = 1) {
             return;
         }
 
-        container.innerHTML = data.journeys.map(j => `
-            <div class="journey-item">
+        container.innerHTML = data.journeys.map((j, idx) => {
+            const created = new Date(j.created_at);
+            const co2Emitted = j.co2_emitted != null ? j.co2_emitted : (j.distance_km * (CO2_FACTORS[j.mode] || 0));
+            const travelTime = j.travel_time_min != null ? j.travel_time_min : Math.round((j.distance_km / (SPEED_FACTORS[j.mode] || 15)) * 60);
+
+            // Build mini mode comparison
+            const modeCompHtml = Object.keys(CO2_FACTORS).map(m => {
+                const co2 = j.distance_km * CO2_FACTORS[m];
+                const cal = j.distance_km * CALORIE_FACTORS[m];
+                const time = Math.round((j.distance_km / SPEED_FACTORS[m]) * 60);
+                const isActive = m === j.mode;
+                const isCar = m === 'car';
+                const cls = isActive ? 'border-green' : isCar ? 'border-red' : '';
+                return `<div class="mode-comp-card ${cls}">
+                    <div class="mode-comp-icon">${MODE_ICONS[m]}</div>
+                    <div class="mode-comp-name">${MODE_NAMES[m]}</div>
+                    <div class="mode-comp-stat"><strong>${fmtNum(co2, 3)}</strong> kg</div>
+                    <div class="mode-comp-stat">${fmtNum(time, 0)} min</div>
+                    <div class="mode-comp-stat">${fmtNum(cal, 0)} cal</div>
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="journey-item" onclick="toggleJourneyDetail(${idx})" style="cursor:pointer">
                 <div class="journey-mode-icon">${MODE_ICONS[j.mode] || '🚶'}</div>
                 <div class="journey-details">
                     <h4>${escapeHtml(j.origin)} → ${escapeHtml(j.destination)}</h4>
                     <div class="journey-meta">
                         <span>${MODE_NAMES[j.mode] || j.mode}</span>
-                        <span>${j.distance_km.toFixed(1)} km</span>
-                        <span>${j.co2_saved > 0 ? '+' : ''}${j.co2_saved.toFixed(2)}kg CO₂</span>
-                        ${j.calories_burned > 0 ? `<span>${Math.round(j.calories_burned)} cal</span>` : ''}
-                        <span>${new Date(j.created_at).toLocaleDateString()}</span>
+                        <span>${fmtNum(j.distance_km)} km</span>
+                        <span>${j.co2_saved > 0 ? '+' : ''}${fmtNum(j.co2_saved, 2)}kg CO₂</span>
+                        ${j.calories_burned > 0 ? `<span>${fmtNum(j.calories_burned, 0)} cal</span>` : ''}
+                        <span>${created.toLocaleDateString()}</span>
                     </div>
                 </div>
                 <div class="journey-xp">+${j.xp_earned} XP</div>
+                <svg class="journey-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
             </div>
-        `).join('');
+            <div class="journey-detail-panel" id="journeyDetail-${idx}">
+                <div class="journey-detail-grid">
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">CO₂ Emitted</span>
+                        <span class="jd-value">${fmtNum(co2Emitted, 3)} kg</span>
+                    </div>
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">CO₂ Saved vs Car</span>
+                        <span class="jd-value green">${j.co2_saved > 0 ? '+' : ''}${fmtNum(j.co2_saved, 3)} kg</span>
+                    </div>
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">Travel Time</span>
+                        <span class="jd-value">${fmtNum(travelTime, 0)} min</span>
+                    </div>
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">Calories</span>
+                        <span class="jd-value">${fmtNum(j.calories_burned || 0, 0)} kcal</span>
+                    </div>
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">Date</span>
+                        <span class="jd-value">${created.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                    <div class="journey-detail-stat">
+                        <span class="jd-label">Time</span>
+                        <span class="jd-value">${created.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                </div>
+                <div class="journey-detail-modes-title">Mode Comparison for ${j.distance_km.toFixed(1)} km</div>
+                <div class="journey-detail-chart-wrap">
+                    <canvas id="journeyChart-${idx}" height="160"></canvas>
+                </div>
+                <div class="mode-comp-cards">${modeCompHtml}</div>
+            </div>`;
+        }).join('');
 
         const pagEl = document.getElementById('journeysPagination');
         if (data.pages > 1) {
@@ -740,6 +981,99 @@ async function loadJourneys(page = 1) {
     } catch (err) {
         container.innerHTML = `<div class="empty-state"><p>Failed to load journeys</p></div>`;
     }
+}
+
+const journeyDetailCharts = {};
+
+function toggleJourneyDetail(idx) {
+    const panel = document.getElementById(`journeyDetail-${idx}`);
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
+
+    // Close all panels (accordion) and destroy their charts
+    document.querySelectorAll('.journey-detail-panel.open').forEach(p => {
+        p.classList.remove('open');
+        p.style.maxHeight = '0';
+        const item = p.previousElementSibling;
+        if (item) item.querySelector('.journey-chevron')?.classList.remove('open');
+    });
+
+    if (!isOpen) {
+        panel.classList.add('open');
+        panel.style.maxHeight = panel.scrollHeight + 200 + 'px';
+        const item = panel.previousElementSibling;
+        if (item) item.querySelector('.journey-chevron')?.classList.add('open');
+
+        // Render chart for this journey
+        renderJourneyDetailChart(idx);
+    }
+}
+
+function renderJourneyDetailChart(idx) {
+    const canvas = document.getElementById(`journeyChart-${idx}`);
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    // Destroy previous chart for this index
+    if (journeyDetailCharts[idx]) {
+        journeyDetailCharts[idx].destroy();
+        delete journeyDetailCharts[idx];
+    }
+
+    // Read distance from the panel title text
+    const panel = document.getElementById(`journeyDetail-${idx}`);
+    const titleEl = panel.querySelector('.journey-detail-modes-title');
+    const distMatch = titleEl?.textContent.match(/([\d.]+)\s*km/);
+    if (!distMatch) return;
+    const distance = parseFloat(distMatch[1]);
+
+    // Read the active mode from the highlighted card
+    const activeCard = panel.querySelector('.mode-comp-card.border-green .mode-comp-name');
+    const activeModeName = activeCard?.textContent || '';
+    const activeModeKey = Object.keys(MODE_NAMES).find(k => MODE_NAMES[k] === activeModeName) || 'walk';
+
+    const modeKeys = Object.keys(CO2_FACTORS);
+    const labels = modeKeys.map(m => MODE_NAMES[m]);
+    const co2Data = modeKeys.map(m => +(distance * CO2_FACTORS[m]).toFixed(3));
+    const bgColors = modeKeys.map(m => m === activeModeKey ? '#22c55e' : m === 'car' ? '#ef4444' : '#94a3b8');
+
+    journeyDetailCharts[idx] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'CO₂ (kg)',
+                data: co2Data,
+                backgroundColor: bgColors,
+                borderRadius: 6,
+                maxBarThickness: 36
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => ctx.parsed.y.toFixed(3) + ' kg CO₂' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'CO₂ (kg)', font: { size: 10 } },
+                    grid: { color: '#f3f4f6' }
+                },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+
+    // Update maxHeight after chart renders
+    setTimeout(() => {
+        if (panel.classList.contains('open')) {
+            panel.style.maxHeight = panel.scrollHeight + 'px';
+        }
+    }, 100);
 }
 
 // ===== LEADERBOARD =====
@@ -769,7 +1103,7 @@ async function loadLeaderboard(type) {
                             <td>${e.rank <= 3 ? `<span class="rank-medal">${medals[e.rank - 1]}</span>` : e.rank}</td>
                             <td style="font-weight:${e.isCurrentUser ? '700' : '400'}">${escapeHtml(e.username)}${e.isCurrentUser ? ' (You)' : ''}</td>
                             <td style="color:var(--gray-400)">Lvl ${e.level}</td>
-                            <td style="font-weight:600">${e.value.toFixed(1)}</td>
+                            <td style="font-weight:600">${fmtNum(e.value)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -882,6 +1216,7 @@ function clearRoute() {
     originCoords = null; destCoords = null;
     routeData = { distance_km: null, duration_min: null };
     document.getElementById('routeInfoOverlay').style.display = 'none';
+    updateModeTimeEstimates();
 }
 
 function locateMe() {
@@ -1016,4 +1351,5 @@ function updateRouteDisplay() {
     // Auto-fill distance field
     document.getElementById('distanceInput').value = d.toFixed(1);
     document.getElementById('distHint').textContent = '(from route)';
+    updateModeTimeEstimates();
 }

@@ -47,11 +47,39 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authMiddleware, async (req, res) => {
     try {
-        const user = await db.get('SELECT id, username, email, xp, level, current_streak, longest_streak FROM users WHERE id = ?', [req.userId]);
+        const user = await db.get('SELECT id, username, email, xp, level, current_streak, longest_streak, created_at FROM users WHERE id = ?', [req.userId]);
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json({ user });
     } catch (err) {
         console.error('Me error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.put('/profile', authMiddleware, async (req, res) => {
+    const { username, email } = req.body;
+    if (!username || username.length < 3 || username.length > 20) {
+        return res.status(400).json({ error: 'Username must be 3-20 characters' });
+    }
+
+    try {
+        const duplicate = await db.get(
+            'SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?',
+            [username, email || '', req.userId]
+        );
+        if (duplicate) {
+            return res.status(409).json({ error: 'Username or email already taken' });
+        }
+
+        await db.run(
+            'UPDATE users SET username = ?, email = ? WHERE id = ?',
+            [username, email || '', req.userId]
+        );
+
+        const user = await db.get('SELECT id, username, email FROM users WHERE id = ?', [req.userId]);
+        res.json({ user });
+    } catch (err) {
+        console.error('Profile update error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
