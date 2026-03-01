@@ -143,6 +143,7 @@ async function handleAuth(e) {
         hideAuthModal();
         updateNavUser();
         hideComparison();
+        navigateTo('dashboard');
         loadDashboard();
         showToast('🌳', `Welcome${authMode === 'register' ? '' : ' back'}, ${currentUser.username}!`);
     } catch (err) {
@@ -157,6 +158,7 @@ function logout() {
     localStorage.removeItem('treeroute_token');
     updateNavUser();
     resetDashboard();
+    if (['profile', 'journeys'].includes(currentPage)) navigateTo('dashboard');
     showToast('👋', 'Signed out successfully');
 }
 
@@ -217,9 +219,15 @@ function navigateTo(page) {
     // Re-render map when switching back to dashboard
     if (page === 'dashboard' && map) setTimeout(() => map.invalidateSize(), 100);
 
-    if (page === 'journeys' && token) loadJourneys();
+    if (page === 'journeys') {
+        if (token) { loadJourneys(); }
+        else { document.getElementById('journeysList').innerHTML = `<div class="empty-state"><div class="empty-icon">🗺️</div><p>Sign in to track and view your journey history.</p><button class="btn-signin" onclick="showAuthModal('register')" style="margin-top:12px">Create Account</button></div>`; }
+    }
     if (page === 'leaderboard') loadLeaderboard(leaderboardType);
-    if (page === 'profile' && token) loadProfileData();
+    if (page === 'profile') {
+        if (token) { loadProfileData(); }
+        else { navigateTo('dashboard'); showAuthModal('login'); }
+    }
 }
 
 // ===== DASHBOARD =====
@@ -415,7 +423,12 @@ async function submitJourney() {
         updateMilestone(guestStats.co2Saved);
         updateImpacts(guestStats.co2Saved);
 
-        showToast('🌱', 'Journey calculated! Sign in to save it permanently.');
+        showToast('🌱', 'Journey calculated! Create an account to save your progress.');
+        // Show sign-up prompt below comparison savings
+        const signupPrompt = document.getElementById('compSavings');
+        if (signupPrompt) {
+            signupPrompt.insertAdjacentHTML('afterend', `<div style="text-align:center;margin-top:12px"><div class="saving-badge" style="cursor:pointer;background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;display:inline-block" onclick="showAuthModal('register')">📝 Create a free account to save your journeys</div></div>`);
+        }
         clearForm();
         return;
     }
@@ -924,7 +937,6 @@ function clickTree() {
 
 // ===== JOURNEYS PAGE =====
 async function loadJourneys(page = 1) {
-    if (!token) return;
     const container = document.getElementById('journeysList');
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
@@ -1369,7 +1381,9 @@ async function fetchRoute() {
             map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
             updateRouteDisplay();
         }
-    } catch {
+    } catch (err) {
+        // Skip fallback if this request was intentionally aborted
+        if (err && err.name === 'AbortError') return;
         // Haversine fallback
         const R = 6371;
         const dLat = (destCoords.lat - originCoords.lat) * Math.PI / 180;
